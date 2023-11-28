@@ -233,31 +233,36 @@ arr2 = [item[1] for item in all_rows_as_list]
 arrTe = [item[0] for item in all_rows_as_list]
 finalArray = []
 
+sumDemand = 1
+
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
-        finalArray.append([(arr1[i])[0], count / n])
+        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand])
         count = 0
+        sumDemand = 0
 
     setf.add((arr1[i])[0])
 
     if((arr1[i])[1] in arr2):
         if(len(arr1[i]) == 4):
             count+= (arr1[i])[2] - (arr1[i])[3]
+            sumDemand+=(arr1[i])[3]
         else:
             count+= (arr1[i])[2]
 
 
-
+print(sumDemand)
 #print(count/n)
 #print(finalArray)
 
 for i in range(len(finalArray)-1):
     (finalArray[i])[1] = (finalArray[i+1])[1]
+    (finalArray[i])[2] = (finalArray[i+1])[2]
 #print(finalArray)
 (finalArray[len(finalArray)-1])[1] = count/n
 
-print(finalArray)
-print(len(finalArray))
+#print(finalArray)
+#print(len(finalArray))
 
 temp2 = []  # THIS FINAL LIST
 
