@@ -230,20 +230,23 @@ setf = {''}
 
 arr1 = sorted(arr1, key=lambda x: x[0])
 arr2 = [item[1] for item in all_rows_as_list]
-
+arrTe = [item[0] for item in all_rows_as_list]
 finalArray = []
 
 for i in range(len(arr1)):
+    if ((arr1[i])[0] not in setf):
+        finalArray.append([(arr1[i])[0], count / n])
+        count = 0
+
+    setf.add((arr1[i])[0])
 
     if((arr1[i])[1] in arr2):
         if(len(arr1[i]) == 4):
             count+= (arr1[i])[2] - (arr1[i])[3]
         else:
             count+= (arr1[i])[2]
-    if ((arr1[i])[0] not in setf):
-        finalArray.append([(arr1[i])[0], count / n])
-        count = 0
-    setf.add((arr1[i])[0])
+
+
 
 #print(count/n)
 #print(finalArray)
@@ -252,4 +255,15 @@ for i in range(len(finalArray)-1):
     (finalArray[i])[1] = (finalArray[i+1])[1]
 #print(finalArray)
 (finalArray[len(finalArray)-1])[1] = count/n
+
 print(finalArray)
+print(len(finalArray))
+
+temp2 = []  # THIS FINAL LIST
+
+for i in range(len(finalArray)):
+    if((finalArray[i])[0] in arrTe):
+        temp2.append(finalArray[i])
+
+print(temp2)
+print(len(temp2))
