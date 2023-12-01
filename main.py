@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime
-
+import math
 
 file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file
 
@@ -83,14 +83,20 @@ finalArray = []
 sumDemand = 1
 
 countABSFCD = 0
+sumDemAllPeriod = 1
+
+
 
 # Основной цикл уже для всего
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
-        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand, countABSFCD/n])
+        RMSE = 123 if sumDemand == 0 else math.sqrt(((count*count)/n))
+        RMSE_percent = 0 if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
+        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand, countABSFCD/n, 0 if sumDemAllPeriod == 0 else countABSFCD/sumDemAllPeriod, RMSE, RMSE_percent])
         count = 0
         sumDemand = 0
         countABSFCD = 0
+        sumDemAllPeriod = 0
 
     setf.add((arr1[i])[0])
 
@@ -99,6 +105,7 @@ for i in range(len(arr1)):
             count+= (arr1[i])[2] - (arr1[i])[3]
             sumDemand+=(arr1[i])[3]
             countABSFCD += abs((arr1[i])[2] - (arr1[i])[3])
+            sumDemAllPeriod+=(arr1[i])[3]
         else:
             count+= (arr1[i])[2]
             countABSFCD += abs((arr1[i])[2])
@@ -108,19 +115,25 @@ print(sumDemand)
 
 
 for i in range(len(finalArray)-1):
-    (finalArray[i])[1] = (finalArray[i+1])[1]
-    (finalArray[i])[2] = (finalArray[i+1])[2]
+    (finalArray[i])[1] = (finalArray[i + 1])[1]
+    (finalArray[i])[2] = (finalArray[i + 1])[2]
     (finalArray[i])[3] = (finalArray[i + 1])[3]
+    (finalArray[i])[4] = (finalArray[i + 1])[4]
+    (finalArray[i])[5] = (finalArray[i + 1])[5]
+    (finalArray[i])[6] = (finalArray[i + 1])[6]
+
 (finalArray[len(finalArray)-1])[1] = count/n
 (finalArray[len(finalArray)-1])[3] = countABSFCD/n
-
-
+(finalArray[len(finalArray)-1])[5] = math.sqrt(((count*count)/n))
+(finalArray[len(finalArray)-1])[6] = RMSE_percent
 temp2 = []  # THIS FINAL LIST
 
 for i in range(len(finalArray)):
     if((finalArray[i])[0] in arrTe):
         temp2.append(finalArray[i])
         (temp2[len(temp2)-1])[2] = round((finalArray[i])[2] * 100, 1)
+        (temp2[len(temp2) - 1])[4] = round((finalArray[i])[4] * 100, 1)
+        (temp2[len(temp2) - 1])[6] = round((finalArray[i])[6] * 100, 1)
 
 for el in temp2:
     print(el)
