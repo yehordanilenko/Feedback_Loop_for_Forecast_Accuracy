@@ -27,9 +27,9 @@ RMSE%: (sqrt ((сумма (FC - D)^2)/n)) / AVG (Demand за весь перио
 
 Score%: MAE% + |Bias%|
 
-Должно вывести на экран каждую среднюю метрику за весь файл.
+Должно вывести на экран каждую среднюю метрику за весь файл. avg каждой колонки 
 
 
-Список "PrimeItem" для которых bias% > 5% -> List of SKUs with demand downside + bias% каждого
+Список "PrimeItem" для которых bias% > 5% -> List of SKUs with demand downside + bias% каждого просто вывод этих данных
 
-Список "PrimeItem" для которых bias% < -5% -> List of SKUs with demand upside + bias% каждого
+Список "PrimeItem" для которых bias% < -5% -> List of SKUs with demand upside + bias% каждого каждого просто вывод этих данных

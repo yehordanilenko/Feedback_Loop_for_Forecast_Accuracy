@@ -31,17 +31,38 @@ for r in all_FC_list:
     r[2] = dd                                   # convert int to data
 
 
-file_demand = 'Demand.xlsx'  # Name of demand file
+file_demand = 'demand_file.xlsx'  # Name of demand file
 
 # Read the Excel file into a Pandas DataFrame
-data_demand = pd.read_excel(file_demand)
-
-
+data_demand = pd.read_excel(file_demand, sheet_name='Closed_SSD')
+data_demand_open = pd.read_excel(file_demand, sheet_name='Open_SSD')
+print('**************************************')
+print(data_demand_open)
+print('**************************************')
 l1 = data_demand.values.tolist()  # list of demand file I work with him for finding number of weeks
+l2 = data_demand_open.values.tolist()
+
 sorted_list = sorted(l1, key=lambda x: x[1])  # sorted by data for getting n
 n = (sorted_list[len(sorted_list)-1])[1].date() - (sorted_list[0])[1].date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
 print("Number of weeks: ", n)
+
+list_of_demand_all = []
+
+for i in range(len(l1)):
+    for j in range(len(l2)):
+        if(l1[i][0] == l2[j][0] and l1[i][1] == l2[j][1]):
+            l1[i][2] += l2[j][2]
+print(len(l1))
+l11 = l1
+for i in range(len(l2)):
+    temp_c = 0
+    for j in range(len(l1)):
+        if(l2[i][0] == l1[j][0] and l2[i][1] == l1[j][1]):
+            temp_c += 1
+    if(temp_c == 0):
+        l1.append(l2[i])
+print(len(l1))
 
 all_rows_as_list = data_demand.values.tolist() # dataframe demand to list
 
