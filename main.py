@@ -92,7 +92,11 @@ for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
         RMSE = 123 if sumDemand == 0 else math.sqrt(((count*count)/n))
         RMSE_percent = 0 if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
-        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand, countABSFCD/n, 0 if sumDemAllPeriod == 0 else countABSFCD/sumDemAllPeriod, RMSE, RMSE_percent])
+        BIAS = count / n
+        MAE = countABSFCD/n
+        SCORE = MAE + abs(BIAS)
+        SCORE_percent = abs(0 if sumDemand == 0 else count / sumDemand) + (0 if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
+        finalArray.append([(arr1[i])[0], BIAS, 0 if sumDemand == 0 else count / sumDemand, MAE , 0 if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
         count = 0
         sumDemand = 0
         countABSFCD = 0
@@ -121,11 +125,15 @@ for i in range(len(finalArray)-1):
     (finalArray[i])[4] = (finalArray[i + 1])[4]
     (finalArray[i])[5] = (finalArray[i + 1])[5]
     (finalArray[i])[6] = (finalArray[i + 1])[6]
+    (finalArray[i])[7] = (finalArray[i + 1])[7]
+    (finalArray[i])[8] = (finalArray[i + 1])[8]
 
 (finalArray[len(finalArray)-1])[1] = count/n
 (finalArray[len(finalArray)-1])[3] = countABSFCD/n
 (finalArray[len(finalArray)-1])[5] = math.sqrt(((count*count)/n))
 (finalArray[len(finalArray)-1])[6] = RMSE_percent
+(finalArray[len(finalArray)-1])[7] = SCORE
+(finalArray[len(finalArray)-1])[8] = SCORE_percent
 temp2 = []  # THIS FINAL LIST
 
 for i in range(len(finalArray)):
@@ -134,6 +142,7 @@ for i in range(len(finalArray)):
         (temp2[len(temp2)-1])[2] = round((finalArray[i])[2] * 100, 1)
         (temp2[len(temp2) - 1])[4] = round((finalArray[i])[4] * 100, 1)
         (temp2[len(temp2) - 1])[6] = round((finalArray[i])[6] * 100, 1)
+        (temp2[len(temp2) - 1])[8] = round((finalArray[i])[8] * 100, 1)
 
 for el in temp2:
     print(el)
