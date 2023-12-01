@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime
 
+
 file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
@@ -81,11 +82,15 @@ finalArray = []
 
 sumDemand = 1
 
+countABSFCD = 0
+
+# Основной цикл уже для всего
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
-        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand])
+        finalArray.append([(arr1[i])[0], count / n, 0 if sumDemand == 0 else count/sumDemand, countABSFCD/n])
         count = 0
         sumDemand = 0
+        countABSFCD = 0
 
     setf.add((arr1[i])[0])
 
@@ -93,8 +98,10 @@ for i in range(len(arr1)):
         if(len(arr1[i]) == 4):
             count+= (arr1[i])[2] - (arr1[i])[3]
             sumDemand+=(arr1[i])[3]
+            countABSFCD += abs((arr1[i])[2] - (arr1[i])[3])
         else:
             count+= (arr1[i])[2]
+            countABSFCD += abs((arr1[i])[2])
 
 
 print(sumDemand)
@@ -103,9 +110,9 @@ print(sumDemand)
 for i in range(len(finalArray)-1):
     (finalArray[i])[1] = (finalArray[i+1])[1]
     (finalArray[i])[2] = (finalArray[i+1])[2]
-
+    (finalArray[i])[3] = (finalArray[i + 1])[3]
 (finalArray[len(finalArray)-1])[1] = count/n
-
+(finalArray[len(finalArray)-1])[3] = countABSFCD/n
 
 
 temp2 = []  # THIS FINAL LIST
@@ -114,7 +121,7 @@ for i in range(len(finalArray)):
     if((finalArray[i])[0] in arrTe):
         temp2.append(finalArray[i])
         (temp2[len(temp2)-1])[2] = round((finalArray[i])[2] * 100, 1)
-print(temp2, sep="\n")
+
 for el in temp2:
     print(el)
 print(len(temp2))
