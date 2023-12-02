@@ -171,14 +171,14 @@ for el in temp2:
 print(len(temp2))
 
 print("Так теперь метрики ебать: ")
-print("Metrics of BIAS: ", mean([item[1] for item in temp2]))
-print("Metrics of BIAS%: ", mean([item[2] for item in temp2]))
-print("Metrics of MAE: ", mean([item[3] for item in temp2]))
-print("Metrics of MAE%: ", mean([item[4] for item in temp2]))
-print("Metrics of RMSE: ", mean([item[5] for item in temp2]))
-print("Metrics of RMSE%: ", mean([item[6] for item in temp2]))
-print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
-print("Metrics of SCORE%: ", mean([item[8] for item in temp2]))
+#print("Metrics of BIAS: ", mean([item[1] for item in temp2]))
+print("Metrics of BIAS%: ", round(mean([item[2] for item in temp2]), 1))
+#print("Metrics of MAE: ", mean([item[3] for item in temp2]))
+print("Metrics of MAE%: ", round(mean([item[4] for item in temp2]), 1))
+#print("Metrics of RMSE: ", mean([item[5] for item in temp2]))
+print("Metrics of RMSE%: ", round(mean([item[6] for item in temp2]), 1))
+#print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
+print("Metrics of SCORE%: ", round(mean([item[8] for item in temp2]), 1))
 
 List_of_SKUs_with_demand_downside = []
 List_of_SKUs_with_demand_upside = []
@@ -189,8 +189,10 @@ for el in temp2:
     elif(el[2] < -5):
         List_of_SKUs_with_demand_upside.append([el[0], el[2]])
 
-print(f"length of downside: {len(List_of_SKUs_with_demand_downside)} \nlength of upside: {len(List_of_SKUs_with_demand_upside)}")
-print(List_of_SKUs_with_demand_downside)
-print(List_of_SKUs_with_demand_upside)
+print(f"Count of downside: {len(List_of_SKUs_with_demand_downside)} \nCount of upside: {len(List_of_SKUs_with_demand_upside)}")
+print(f"Count of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside) - len(List_of_SKUs_with_demand_upside)}")
+
+#print(List_of_SKUs_with_demand_downside)
+#print(List_of_SKUs_with_demand_upside)
 
 
