@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pandas as pd
 from datetime import datetime
 import math
@@ -198,46 +200,63 @@ print(f"Count of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside)
 
 list_dates = []
 c2 = 0
+for i in sorted_list_demand:
+    print(i)
+print(len(sorted_list_demand))
 
+sum_by_date = defaultdict(int)
 
+# Calculating sum of integers for each date
+for item in sorted_list_demand:
+    date = item[1]  # Assuming the date is at index 1
+    value = item[2]  # Assuming the integer is at index 2
+    sum_by_date[date] += value
 
+# Displaying sums for each date
+# Creating a list of lists containing date and total
+date_total_list = [ total for total in sum_by_date.items()]
 
+# Extracting only the totals
+totals_only = [total for _, total in date_total_list]
+
+# Displaying the list of totals
+print(totals_only)
 
 #print(len(all_rows_as_list))
 
 
-# integers_list = [sublist[2] for sublist in all_rows_as_list]
-#
-# import pandas as pd
-# from scipy.stats import kendalltau
-#
-# # Предположим, что у вас есть DataFrame с данными в листе1
-# # Замените 'your_data.csv' на путь к вашему файлу или используйте другие способы загрузки данных
-#
-# # Предположим, что у вас есть два столбца 'X' и 'Y', и вы хотите проверить тренд в 'Y' относительно 'X'
-# x_values = integers_list
-# y_values = [num for num in range(len(integers_list))]
-#
-# # Выполняем тест Кендалла
-# tau, p_value = kendalltau(y_values, x_values)
-#
-# # Выводим результаты теста
-# print(f"Значение статистики Кендалла (τ): {tau}")
-# print(f"P-значение: {p_value}")
-#
-# # Проверяем значимость
-# if p_value < 0.05:
-#     print("Отвергаем нулевую гипотезу, есть тренд.")
-# else:
-#     print("Нет оснований отвергнуть нулевую гипотезу, тренд отсутствует.")
-#
-# import numpy as np
-# import matplotlib.pyplot as plt
-#
-# x = np.array([num for num in range(len(integers_list))])
-# y = np.array(integers_list)
-#
-#
-# plt.plot(x, y)
-# plt.show()
-# #print(f"P-value: {result.p}")
+integers_list = [sublist[2] for sublist in all_rows_as_list]
+
+import pandas as pd
+from scipy.stats import kendalltau
+
+# Предположим, что у вас есть DataFrame с данными в листе1
+# Замените 'your_data.csv' на путь к вашему файлу или используйте другие способы загрузки данных
+
+# Предположим, что у вас есть два столбца 'X' и 'Y', и вы хотите проверить тренд в 'Y' относительно 'X'
+x_values = totals_only
+y_values = [num for num in range(len(totals_only))]
+
+# Выполняем тест Кендалла
+tau, p_value = kendalltau(x_values, y_values)
+
+# Выводим результаты теста
+print(f"Значение статистики Кендалла (τ): {tau}")
+print(f"P-значение: {p_value}")
+
+# Проверяем значимость
+if p_value < 0.05:
+    print("Отвергаем нулевую гипотезу, есть тренд.")
+else:
+    print("Нет оснований отвергнуть нулевую гипотезу, тренд отсутствует.")
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.array([num for num in range(len(totals_only))])
+y = np.array(totals_only)
+
+
+plt.plot(x, y)
+plt.show()
+#print(f"P-value: {result.p}")
