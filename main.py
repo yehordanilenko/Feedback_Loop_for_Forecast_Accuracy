@@ -227,6 +227,36 @@ print(totals_only)
 
 integers_list = [sublist[2] for sublist in all_rows_as_list]
 
+from scipy.stats import kendalltau
+import numpy as np
+import matplotlib.pyplot as plt
+from pandas import Timestamp
+
+# Ваш лист с данными
+data = all_rows_as_list
+
+# Преобразование дат в формат Timestamp и количеств в массивы numpy
+dates = np.array([row[1] for row in data])
+qty = np.array([row[2] for row in data])
+
+# Выполнение теста Кендалла
+tau, p_value = kendalltau(qty, range(len(qty)))
+
+# Определение направления тренда
+trend_direction = "Upward" if tau > 0 else "Downward" if tau < 0 else "No Trend"
+
+# Вывод результатов
+print(f"Trend Direction: {trend_direction}")
+print(f"Kendall's Tau: {tau}")
+print(f"P-value: {p_value}")
+
+# Постройте график данных
+plt.plot(dates, qty, marker='o', label='Actual Demand')
+plt.title('Demand Over Time')
+plt.xlabel('Date')
+plt.ylabel('Demand')
+plt.legend()
+plt.show()
 import pandas as pd
 from scipy.stats import kendalltau
 
@@ -260,3 +290,21 @@ y = np.array(totals_only)
 plt.plot(x, y)
 plt.show()
 #print(f"P-value: {result.p}")
+
+import pandas as pd
+from scipy.stats import kendalltau
+
+# Example list of lists
+data = all_rows_as_list
+
+# Convert the list of lists to a DataFrame
+df = pd.DataFrame(data, columns=['Label', 'Timestamp', 'Value'])
+
+# Convert Timestamp column to datetime if needed
+df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+
+# Compute Kendall's tau correlation between Timestamp and Value columns
+tau, p_value = kendalltau(df['Timestamp'], df['Value'])
+
+print(f"Kendall's Tau: {tau}")
+print(f"P-value: {p_value}")
