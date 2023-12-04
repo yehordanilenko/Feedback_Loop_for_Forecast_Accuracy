@@ -196,33 +196,48 @@ print(f"Count of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside)
 #print(List_of_SKUs_with_demand_upside)
 
 
+list_dates = []
+c2 = 0
 
 
-integers_list = [sublist[2] for sublist in all_rows_as_list]
-for i in integers_list:
-    print(i)
 
-import pandas as pd
-from scipy.stats import kendalltau
 
-# Предположим, что у вас есть DataFrame с данными в листе1
-# Замените 'your_data.csv' на путь к вашему файлу или используйте другие способы загрузки данных
 
-# Предположим, что у вас есть два столбца 'X' и 'Y', и вы хотите проверить тренд в 'Y' относительно 'X'
-x_values = integers_list
-y_values = integers_list# [num for num in range(len(integers_list))]
+#print(len(all_rows_as_list))
 
-# Выполняем тест Кендалла
-tau, p_value = kendalltau(x_values, y_values)
 
-# Выводим результаты теста
-print(f"Значение статистики Кендалла (τ): {tau}")
-print(f"P-значение: {p_value}")
-
-# Проверяем значимость
-if p_value < 0.05:
-    print("Отвергаем нулевую гипотезу, есть тренд.")
-else:
-    print("Нет оснований отвергнуть нулевую гипотезу, тренд отсутствует.")
-
-#print(f"P-value: {result.p}")
+# integers_list = [sublist[2] for sublist in all_rows_as_list]
+#
+# import pandas as pd
+# from scipy.stats import kendalltau
+#
+# # Предположим, что у вас есть DataFrame с данными в листе1
+# # Замените 'your_data.csv' на путь к вашему файлу или используйте другие способы загрузки данных
+#
+# # Предположим, что у вас есть два столбца 'X' и 'Y', и вы хотите проверить тренд в 'Y' относительно 'X'
+# x_values = integers_list
+# y_values = [num for num in range(len(integers_list))]
+#
+# # Выполняем тест Кендалла
+# tau, p_value = kendalltau(y_values, x_values)
+#
+# # Выводим результаты теста
+# print(f"Значение статистики Кендалла (τ): {tau}")
+# print(f"P-значение: {p_value}")
+#
+# # Проверяем значимость
+# if p_value < 0.05:
+#     print("Отвергаем нулевую гипотезу, есть тренд.")
+# else:
+#     print("Нет оснований отвергнуть нулевую гипотезу, тренд отсутствует.")
+#
+# import numpy as np
+# import matplotlib.pyplot as plt
+#
+# x = np.array([num for num in range(len(integers_list))])
+# y = np.array(integers_list)
+#
+#
+# plt.plot(x, y)
+# plt.show()
+# #print(f"P-value: {result.p}")
