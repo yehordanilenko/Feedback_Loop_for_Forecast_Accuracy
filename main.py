@@ -43,8 +43,13 @@ data_demand_open = pd.read_excel(file_demand, sheet_name='Open_SSD')
 l1 = data_demand.values.tolist()  # list of demand file I work with him for finding number of weeks
 l2 = data_demand_open.values.tolist()
 
-sorted_list = sorted(l1, key=lambda x: x[1])  # sorted by data for getting n
-n = (sorted_list[len(sorted_list)-1])[1].date() - (sorted_list[0])[1].date() # At first n is number of days between first and last dates
+sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor
+print(sorted_list_delfor[0][2])
+sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
+min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1]
+print(sorted_list_delfor[0][2] > sorted_list[0][1])
+print(min_date)
+n = (sorted_list[len(sorted_list)-1])[1].date() - min_date.date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
 print("====================================================================================")
 print("Number of weeks: ", n)
@@ -125,16 +130,16 @@ for i in range(len(arr1)):
         # if(sumDemand > 0 and forecast_allPer == 0):
         #     List_of_SKUs_with_some_D_but_0_FCST.append((arr1[i])[0])
 
-        RMSE = 123 if sumDemand == 0 else math.sqrt(((count*count)/n))
-        RMSE_percent = 0 if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
+        RMSE = math.sqrt(((count*count)/n))
+        RMSE_percent = RMSE if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
         BIAS = count / n
         MAE = countABSFCD/n
         SCORE = MAE + abs(BIAS)
-        SCORE_percent = abs(0 if sumDemand == 0 else count / sumDemand) + (0 if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
+        SCORE_percent = abs(BIAS if sumDemand == 0 else count / sumDemand) + (countABSFCD if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
         list_of_demands_and_delfors.append([sumDemand, forecast_allPer])
         last_for_demand = sumDemand
         last_for_FC = forecast_allPer
-        finalArray.append([(arr1[i])[0], BIAS, 0 if sumDemand == 0 else count / sumDemand, MAE , 0 if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
+        finalArray.append([(arr1[i])[0], BIAS, BIAS if sumDemand == 0 else count / sumDemand, MAE , MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
         count = 0
         sumDemand = 0
         countABSFCD = 0
@@ -199,10 +204,24 @@ for el in temp2:
     print(el)             # ЭТО ВСЁ ИТОГОВЫЙ ТО ЧТО ПЕРВАЯ ЗАДАЧА
 print(len(temp2))
 print("====================================================================================")
+from openpyxl import Workbook
 
+# Your list of lists
+data = temp2
+
+# Create a new workbook and select the active worksheet
+workbook = Workbook()
+sheet = workbook.active
+
+# Write data to the worksheet
+for row in data:
+    sheet.append(row)
+
+# Save the workbook
+workbook.save(filename='output.xlsx')
 
 print("====================================================================================")
-print("Так теперь метрики ебать: ")
+print("Metrices: ")
 #print("Metrics of BIAS: ", mean([item[1] for item in temp2]))
 print("Metrics of BIAS%: ", round(mean([item[2] for item in temp2]), 1), "%")
 #print("Metrics of MAE: ", mean([item[3] for item in temp2]))
@@ -216,12 +235,15 @@ print("=========================================================================
 
 List_of_SKUs_with_demand_downside = []
 List_of_SKUs_with_demand_upside = []
+perfect_demand = []
 
 for el in temp2:
     if(el[2] > 5 ):
         List_of_SKUs_with_demand_downside.append([el[0], el[2]])
     elif(el[2] < -5):
         List_of_SKUs_with_demand_upside.append([el[0], el[2]])
+    else:
+        perfect_demand.append([el[0],el[2]])
 
 print("====================================================================================")
 print(f"Count of downside: {len(List_of_SKUs_with_demand_downside)}")
@@ -229,6 +251,7 @@ print(List_of_SKUs_with_demand_downside)
 print(f"\nCount of upside: {len(List_of_SKUs_with_demand_upside)}")
 print(List_of_SKUs_with_demand_upside)
 print(f"\nCount of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside) - len(List_of_SKUs_with_demand_upside)}")
+print(perfect_demand)
 print("====================================================================================")
 print("====================================================================================")
 print("List demand > 0 and FC = 0: ")
