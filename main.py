@@ -203,21 +203,7 @@ for el in temp2:
     print(el)             # ЭТО ВСЁ ИТОГОВЫЙ ТО ЧТО ПЕРВАЯ ЗАДАЧА
 print(len(temp2))
 print("====================================================================================")
-from openpyxl import Workbook
 
-# Your list of lists
-data = temp2
-
-# Create a new workbook and select the active worksheet
-workbook = Workbook()
-sheet = workbook.active
-
-# Write data to the worksheet
-for row in data:
-    sheet.append(row)
-
-# Save the workbook
-workbook.save(filename='output.xlsx')
 
 print("====================================================================================")
 print("Metrices: ")
@@ -260,6 +246,40 @@ print("=========================================================================
 #print(List_of_SKUs_with_demand_downside)
 #print(List_of_SKUs_with_demand_upside)
 
+from openpyxl import Workbook
+
+# Your list of lists
+data = temp2
+data222 = List_of_SKUs_with_demand_downside
+data333 = List_of_SKUs_with_demand_upside
+columns1 = ['PrimeItem','Bias','Bias%','MAE','MAE%','RMSE','RMSE%','Score','Score%']
+# Create a new workbook and select the active worksheet
+workbook = Workbook()
+sheet1 = workbook.active
+sheet1.title = 'All data'
+# Write column names to Sheet 1
+sheet1.append(columns1)
+# Write data to the worksheet
+for row in data:
+    sheet1.append(row)
+
+# Create Sheet 2
+sheet2 = workbook.create_sheet(title='Sheet 2')
+sheet2.append(['List_of_SKUs_with_demand_downside'])
+columns2 = ['PrimeItem', 'BIAS%']
+sheet2.append(columns2)
+# Write data to Sheet 2
+for row in data222:
+    sheet2.append(row)
+
+sheet2.append([])
+sheet2.append(['List_of_SKUs_with_demand_upside'])
+# Write data to Sheet 2
+for row in data333:
+    sheet2.append(row)
+
+# Save the workbook
+workbook.save(filename='output.xlsx')
 
 list_dates = []
 c2 = 0
