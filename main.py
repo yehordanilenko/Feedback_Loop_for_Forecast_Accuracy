@@ -44,11 +44,11 @@ l1 = data_demand.values.tolist()  # list of demand file I work with him for find
 l2 = data_demand_open.values.tolist()
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor
-print(sorted_list_delfor[0][2])
+#print(sorted_list_delfor[0][2])
 sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1]
-print(sorted_list_delfor[0][2] > sorted_list[0][1])
-print(min_date)
+#print(sorted_list_delfor[0][2] > sorted_list[0][1])
+#print(min_date)
 n = (sorted_list[len(sorted_list)-1])[1].date() - min_date.date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
 print("====================================================================================")
@@ -129,13 +129,12 @@ for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
         # if(sumDemand > 0 and forecast_allPer == 0):
         #     List_of_SKUs_with_some_D_but_0_FCST.append((arr1[i])[0])
-
+        BIAS = count / n
+        MAE = countABSFCD / n
         RMSE = math.sqrt(((count*count)/n))
         RMSE_percent = RMSE if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
-        BIAS = count / n
-        MAE = countABSFCD/n
         SCORE = MAE + abs(BIAS)
-        SCORE_percent = abs(BIAS if sumDemand == 0 else count / sumDemand) + (countABSFCD if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
+        SCORE_percent = abs(BIAS if sumDemand == 0 else count / sumDemand) + (MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
         list_of_demands_and_delfors.append([sumDemand, forecast_allPer])
         last_for_demand = sumDemand
         last_for_FC = forecast_allPer
