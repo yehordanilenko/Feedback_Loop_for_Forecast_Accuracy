@@ -4,7 +4,7 @@ from datetime import datetime
 import math
 from statistics import mean
 
-file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file
+file_delfor = 'DELFOR2023.10.02.csv' # Name of delfor file
 file_demand = 'demand_file.xlsx'  # Name of demand file
 
 
