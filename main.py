@@ -4,7 +4,7 @@ from datetime import datetime
 import math
 from statistics import mean
 
-file_delfor = 'DELFOR2023.10.02.csv' # Name of delfor file
+file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file
 file_demand = 'demand_file.xlsx'  # Name of demand file
 
 
@@ -242,13 +242,14 @@ print("=========================================================================
 print("List demand > 0 and FC = 0: ")
 #print(len(List_of_SKUs_with_some_D_but_0_FCST))
 print(List_of_SKUs_with_some_D_but_0_FCST)
+print(f"Length of this items: {len(List_of_SKUs_with_some_D_but_0_FCST)}")
 print("====================================================================================")
 #print(List_of_SKUs_with_demand_downside)
 #print(List_of_SKUs_with_demand_upside)
 
 from openpyxl import Workbook
 
-# Your list of lists
+# Work with write in file
 data = temp2
 data222 = List_of_SKUs_with_demand_downside
 data333 = List_of_SKUs_with_demand_upside
@@ -256,7 +257,7 @@ columns1 = ['PrimeItem','Bias','Bias%','MAE','MAE%','RMSE','RMSE%','Score','Scor
 # Create a new workbook and select the active worksheet
 workbook = Workbook()
 sheet1 = workbook.active
-sheet1.title = 'All data'
+sheet1.title = 'All_data'
 # Write column names to Sheet 1
 sheet1.append(columns1)
 # Write data to the worksheet
@@ -264,130 +265,58 @@ for row in data:
     sheet1.append(row)
 
 # Create Sheet 2
-sheet2 = workbook.create_sheet(title='Sheet 2')
-sheet2.append(['List_of_SKUs_with_demand_downside'])
-columns2 = ['PrimeItem', 'BIAS%']
+sheet2 = workbook.create_sheet(title='SKU')
+sheet2.append(['List_of_SKUs_with_demand_downside','','List_of_SKUs_with_demand_upside',''])
+columns2 = ['PrimeItem', 'BIAS%', 'PrimeItem', 'BIAS%']
 sheet2.append(columns2)
+
+#if(len(data222) >= len(len(data333))):
+combined_list = []
+
+for i in range(max(len(data222), len(data333))):
+    item_1 = data222[i] if i < len(data222) else ["", ""]
+    item_2 = data333[i] if i < len(data333) else ["", ""]
+    combined_list.append(item_1 + item_2)
+
+#print(combined_list)
 # Write data to Sheet 2
-for row in data222:
+for row in combined_list:
     sheet2.append(row)
 
 sheet2.append([])
-sheet2.append(['List_of_SKUs_with_demand_upside'])
-# Write data to Sheet 2
-for row in data333:
-    sheet2.append(row)
 
+sheet3 = workbook.create_sheet(title='хуйня_ой')
+sheet3.append(['List items demand > 0 and FCST =0'])
+sheet3.append(['PrimeItem'])
+for row in List_of_SKUs_with_some_D_but_0_FCST:
+    sheet3.append([row])
 # Save the workbook
 workbook.save(filename='output.xlsx')
 
-list_dates = []
-c2 = 0
-# for i in sorted_list_demand:
-#     print(i)
-#print(len(sorted_list_demand))
+sheet3.append([])
 
-sum_by_date = defaultdict(int)
-
-# Calculating sum of integers for each date
-for item in sorted_list_demand:
-    date = item[1]  # Assuming the date is at index 1
-    value = item[2]  # Assuming the integer is at index 2
-    sum_by_date[date] += value
-
-# Displaying sums for each date
-# Creating a list of lists containing date and total
-date_total_list = [ total for total in sum_by_date.items()]
-
-# Extracting only the totals
-totals_only = [total for _, total in date_total_list]
+#
+# list_dates = []
+# c2 = 0
+# # for i in sorted_list_demand:
+# #     print(i)
+# #print(len(sorted_list_demand))
+#
+# sum_by_date = defaultdict(int)
+#
+# # Calculating sum of integers for each date
+# for item in sorted_list_demand:
+#     date = item[1]  # Assuming the date is at index 1
+#     value = item[2]  # Assuming the integer is at index 2
+#     sum_by_date[date] += value
+#
+# # Displaying sums for each date
+# # Creating a list of lists containing date and total
+# date_total_list = [ total for total in sum_by_date.items()]
+#
+# # Extracting only the totals
+# totals_only = [total for _, total in date_total_list]
 
 # Displaying the list of totals
-print(totals_only)
+#print(totals_only)
 
-#print(len(all_rows_as_list))
-
-
-# integers_list = [sublist[2] for sublist in all_rows_as_list]
-#
-# from scipy.stats import kendalltau
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from pandas import Timestamp
-#
-# # Ваш лист с данными
-# data = all_rows_as_list
-#
-# # Преобразование дат в формат Timestamp и количеств в массивы numpy
-# dates = np.array([row[1] for row in data])
-# qty = np.array([row[2] for row in data])
-#
-# # Выполнение теста Кендалла
-# tau, p_value = kendalltau(qty, range(len(qty)))
-#
-# # Определение направления тренда
-# trend_direction = "Upward" if tau > 0 else "Downward" if tau < 0 else "No Trend"
-#
-# # Вывод результатов
-# print(f"Trend Direction: {trend_direction}")
-# print(f"Kendall's Tau: {tau}")
-# print(f"P-value: {p_value}")
-#
-# # Постройте график данных
-# plt.plot(dates, qty, marker='o', label='Actual Demand')
-# plt.title('Demand Over Time')
-# plt.xlabel('Date')
-# plt.ylabel('Demand')
-# plt.legend()
-# plt.show()
-# import pandas as pd
-# from scipy.stats import kendalltau
-#
-# # Предположим, что у вас есть DataFrame с данными в листе1
-# # Замените 'your_data.csv' на путь к вашему файлу или используйте другие способы загрузки данных
-#
-# # Предположим, что у вас есть два столбца 'X' и 'Y', и вы хотите проверить тренд в 'Y' относительно 'X'
-# x_values = totals_only
-# y_values = [num for num in range(len(totals_only))]
-#
-# # Выполняем тест Кендалла
-# tau, p_value = kendalltau(x_values, y_values)
-#
-# # Выводим результаты теста
-# print(f"Значение статистики Кендалла (τ): {tau}")
-# print(f"P-значение: {p_value}")
-#
-# # Проверяем значимость
-# if p_value < 0.05:
-#     print("Отвергаем нулевую гипотезу, есть тренд.")
-# else:
-#     print("Нет оснований отвергнуть нулевую гипотезу, тренд отсутствует.")
-#
-# import numpy as np
-# import matplotlib.pyplot as plt
-#
-# x = np.array([num for num in range(len(totals_only))])
-# y = np.array(totals_only)
-#
-#
-# plt.plot(x, y)
-# plt.show()
-# #print(f"P-value: {result.p}")
-#
-# import pandas as pd
-# from scipy.stats import kendalltau
-#
-# # Example list of lists
-# data = all_rows_as_list
-#
-# # Convert the list of lists to a DataFrame
-# df = pd.DataFrame(data, columns=['Label', 'Timestamp', 'Value'])
-#
-# # Convert Timestamp column to datetime if needed
-# df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-#
-# # Compute Kendall's tau correlation between Timestamp and Value columns
-# tau, p_value = kendalltau(df['Timestamp'], df['Value'])
-#
-# print(f"Kendall's Tau: {tau}")
-# print(f"P-value: {p_value}")
