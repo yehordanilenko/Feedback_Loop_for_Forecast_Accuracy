@@ -119,6 +119,7 @@ finalArray = []
 sumDemand = 0
 
 countABSFCD = 0
+countsq = 0
 sumDemAllPeriod = 1
 forecast_allPer = 0
 
@@ -131,7 +132,7 @@ for i in range(len(arr1)):
         #     List_of_SKUs_with_some_D_but_0_FCST.append((arr1[i])[0])
         BIAS = count / n
         MAE = countABSFCD / n
-        RMSE = math.sqrt(((count*count)/n))
+        RMSE = math.sqrt(countsq / n)
         RMSE_percent = RMSE if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
         SCORE = MAE + abs(BIAS)
         SCORE_percent = abs(BIAS if sumDemand == 0 else count / sumDemand) + (MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
@@ -140,6 +141,7 @@ for i in range(len(arr1)):
         last_for_FC = forecast_allPer
         finalArray.append([(arr1[i])[0], BIAS, BIAS if sumDemand == 0 else count / sumDemand, MAE , MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
         count = 0
+        countsq = 0
         sumDemand = 0
         countABSFCD = 0
         sumDemAllPeriod = 0
@@ -150,12 +152,14 @@ for i in range(len(arr1)):
     if((arr1[i])[1] in arr2):
         if(len(arr1[i]) == 4):
             count+= (arr1[i])[2] - (arr1[i])[3]
+            countsq+= ((arr1[i])[2] - (arr1[i])[3])**2
             sumDemand+=(arr1[i])[3]
             countABSFCD += abs((arr1[i])[2] - (arr1[i])[3])
             sumDemAllPeriod+=(arr1[i])[3]
             forecast_allPer += (arr1[i])[2]
         else:
             count+= (arr1[i])[2]
+            countsq+= ((arr1[i])[2])**2
             countABSFCD += abs((arr1[i])[2])
             forecast_allPer += (arr1[i])[2]
 
@@ -174,7 +178,7 @@ for i in range(len(finalArray)-1):
 
 (finalArray[len(finalArray)-1])[1] = count/n
 (finalArray[len(finalArray)-1])[3] = countABSFCD/n
-(finalArray[len(finalArray)-1])[5] = math.sqrt(((count*count)/n))
+(finalArray[len(finalArray)-1])[5] = math.sqrt(countsq/n)
 (finalArray[len(finalArray)-1])[6] = RMSE_percent
 (finalArray[len(finalArray)-1])[7] = SCORE
 (finalArray[len(finalArray)-1])[8] = SCORE_percent
@@ -265,9 +269,9 @@ for row in data:
     sheet1.append(row)
 
 # Create Sheet 2
-sheet2 = workbook.create_sheet(title='SKU')
+sheet2 = workbook.create_sheet(title='Problematic SKUs')
 sheet2.append(['List_of_SKUs_with_demand_downside','','List_of_SKUs_with_demand_upside',''])
-columns2 = ['PrimeItem', 'BIAS%', 'PrimeItem', 'BIAS%']
+columns2 = ['PrimeItem', 'BIAS% for downside', 'PrimeItem', 'BIAS% for upside']
 sheet2.append(columns2)
 
 #if(len(data222) >= len(len(data333))):
@@ -285,38 +289,12 @@ for row in combined_list:
 
 sheet2.append([])
 
-sheet3 = workbook.create_sheet(title='хуйня_ой')
+sheet3 = workbook.create_sheet(title='Items with some D but 0 FCST')
 sheet3.append(['List items demand > 0 and FCST =0'])
 sheet3.append(['PrimeItem'])
 for row in List_of_SKUs_with_some_D_but_0_FCST:
     sheet3.append([row])
 # Save the workbook
-workbook.save(filename='output.xlsx')
+workbook.save(filename='test.xlsx')
 
 sheet3.append([])
-
-#
-# list_dates = []
-# c2 = 0
-# # for i in sorted_list_demand:
-# #     print(i)
-# #print(len(sorted_list_demand))
-#
-# sum_by_date = defaultdict(int)
-#
-# # Calculating sum of integers for each date
-# for item in sorted_list_demand:
-#     date = item[1]  # Assuming the date is at index 1
-#     value = item[2]  # Assuming the integer is at index 2
-#     sum_by_date[date] += value
-#
-# # Displaying sums for each date
-# # Creating a list of lists containing date and total
-# date_total_list = [ total for total in sum_by_date.items()]
-#
-# # Extracting only the totals
-# totals_only = [total for _, total in date_total_list]
-
-# Displaying the list of totals
-#print(totals_only)
-
