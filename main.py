@@ -122,7 +122,7 @@ countABSFCD = 0
 countsq = 0
 sumDemAllPeriod = 1
 forecast_allPer = 0
-
+list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
 list_of_demands_and_delfors = []
 # Основной цикл уже для всего
@@ -140,6 +140,7 @@ for i in range(len(arr1)):
         last_for_demand = sumDemand
         last_for_FC = forecast_allPer
         finalArray.append([(arr1[i])[0], BIAS, BIAS if sumDemand == 0 else count / sumDemand, MAE , MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
+
         count = 0
         countsq = 0
         sumDemand = 0
@@ -157,11 +158,15 @@ for i in range(len(arr1)):
             countABSFCD += abs((arr1[i])[2] - (arr1[i])[3])
             sumDemAllPeriod+=(arr1[i])[3]
             forecast_allPer += (arr1[i])[2]
+            if(arr1[i][0] in arrTe):
+                list_temp10.append([arr1[i][0], arr1[i][1], arr1[i][2], arr1[i][3]])
         else:
             count+= (arr1[i])[2]
             countsq+= ((arr1[i])[2])**2
             countABSFCD += abs((arr1[i])[2])
             forecast_allPer += (arr1[i])[2]
+            if (arr1[i][0] in arrTe):
+                list_temp10.append([arr1[i][0], arr1[i][1], arr1[i][2]])
 
 
 for i in range(len(finalArray)-1):
@@ -294,6 +299,12 @@ sheet3.append(['List items demand > 0 and FCST =0'])
 sheet3.append(['PrimeItem'])
 for row in List_of_SKUs_with_some_D_but_0_FCST:
     sheet3.append([row])
+
+sheet4 = workbook.create_sheet(title='D vs FC')
+sheet4.append(['PrimeItem', 'Date', 'FC', 'Demand'])
+
+for row in list_temp10:
+    sheet4.append(row)
 # Save the workbook
 workbook.save(filename='test.xlsx')
 
