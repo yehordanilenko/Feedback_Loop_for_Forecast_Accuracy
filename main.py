@@ -4,8 +4,8 @@ from datetime import datetime
 import math
 from statistics import mean
 
-file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file
-file_demand = 'demand_file.xlsx'  # Name of demand file
+file_delfor = 'DELFOR 2023.05.15.csv' # Name of delfor file
+file_demand = 'Last_demand_temp.xlsx'  # Name of demand file
 
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
@@ -38,30 +38,36 @@ for r in all_FC_list:
 
 
 # Read the Excel file into a Pandas DataFrame
-data_demand = pd.read_excel(file_demand, sheet_name='Closed_SSD')
-data_demand_open = pd.read_excel(file_demand, sheet_name='Open_SSD')
+data_demand = pd.read_excel(file_demand, sheet_name='TransactionHistory') #CLOSED SSD
+data_demand_open = pd.read_excel(file_demand, sheet_name='PlannedTransactions') #OPEN SSD
 l1 = data_demand.values.tolist()  # list of demand file I work with him for finding number of weeks
 l2 = data_demand_open.values.tolist()
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor
 #print(sorted_list_delfor[0][2])
 sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
+sorted_list2 = sorted(l2, key=lambda x: x[1])
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1]
+# print((sorted_list2[len(sorted_list2)-1])[1].date())
+# print((sorted_list[len(sorted_list)-1])[1].date())
 #print(sorted_list_delfor[0][2] > sorted_list[0][1])
 #print(min_date)
-n = (sorted_list[len(sorted_list)-1])[1].date() - min_date.date() # At first n is number of days between first and last dates
+last_date = True if (sorted_list2[len(sorted_list2)-1])[1].date() >= (sorted_list[len(sorted_list)-1])[1].date() else False
+n = (((sorted_list2[len(sorted_list2)-1])[1].date() if last_date else (sorted_list[len(sorted_list)-1])[1].date())) - min_date.date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
-print("====================================================================================")
-print("Number of weeks: ", n)
+print("Number of weeks(OLD, USELESS): ", n)
 #print("====================================================================================")
-
+print(l1[0])
+current_date = datetime(2023, 12, 23).date()#datetime.today().date() # CURRENT DATE
+print("Current date (we do it by self)", current_date)
+# print((sorted_list2[len(sorted_list2)-1])[1].date())
+# print(current_date - (sorted_list2[len(sorted_list2)-1])[1].date())
 list_of_demand_all = []
 
 for i in range(len(l1)):
     for j in range(len(l2)):
         if(l1[i][0] == l2[j][0] and l1[i][1] == l2[j][1]):
             l1[i][2] += l2[j][2]
-
 
 for i in range(len(l2)):
     temp_c = 0
@@ -70,12 +76,20 @@ for i in range(len(l2)):
             temp_c += 1
     if(temp_c == 0):
         l1.append(l2[i])
+list_bef_cur_date = [] # list of dates less or equal curr date
+for el in l1:
+    if(el[1].date() <= current_date):
+        list_bef_cur_date.append(el)
 
-#print("====================================================================================")
-print("Number of demand data: ",len(l1))
+print("Number of demand data: ",len(list_bef_cur_date))
+print("Number of prev try for demand (not using current date)", len(l1))
+sorted_list_demand_before_cur_d = sorted(list_bef_cur_date, key=lambda x: x[1])
+n = sorted_list_demand_before_cur_d[len(sorted_list_demand_before_cur_d) - 1][1].date() - min_date.date() # At first n is number of days between first and last dates
+n = (n/7).days + 1 # We change n to count number of weeks
+print("Number of weeks: ", n)
 print("====================================================================================")
 
-all_rows_as_list = l1 # data_demand.values.tolist() # dataframe demand to list
+all_rows_as_list = list_bef_cur_date # data_demand.values.tolist() # dataframe demand to list
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda x: x[2]) # Sorting delfor by date
 sorted_list_demand = sorted(all_rows_as_list, key=lambda x: x[1]) # Sorting demand by date
@@ -125,6 +139,7 @@ forecast_allPer = 0
 list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
 list_of_demands_and_delfors = []
+print(arr1[len(arr1)-1])
 # Основной цикл уже для всего
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
@@ -215,15 +230,15 @@ print("=========================================================================
 
 
 print("====================================================================================")
-print("Metrices: ")
+print("Metrics: ")
 #print("Metrics of BIAS: ", mean([item[1] for item in temp2]))
-print("Metrics of BIAS%: ", round(mean([item[2] for item in temp2]), 1), "%")
+print("Average BIAS%: ", round(mean([item[2] for item in temp2]), 1), "%")
 #print("Metrics of MAE: ", mean([item[3] for item in temp2]))
-print("Metrics of MAE%: ", round(mean([item[4] for item in temp2]), 1), "%")
+print("Average MAE%: ", round(mean([item[4] for item in temp2]), 1), "%")
 #print("Metrics of RMSE: ", mean([item[5] for item in temp2]))
-print("Metrics of RMSE%: ", round(mean([item[6] for item in temp2]), 1), "%")
+print("Average RMSE%: ", round(mean([item[6] for item in temp2]), 1), "%")
 #print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
-print("Metrics of SCORE%: ", round(mean([item[8] for item in temp2]), 1), "%")
+print("Average SCORE%: ", round(mean([item[8] for item in temp2]), 1), "%")
 print("====================================================================================")
 
 
@@ -232,19 +247,19 @@ List_of_SKUs_with_demand_upside = []
 perfect_demand = []
 
 for el in temp2:
-    if(el[2] > 5 ):
+    if(el[2] > 30 ):
         List_of_SKUs_with_demand_downside.append([el[0], el[2]])
-    elif(el[2] < -5):
+    elif(el[2] < -30):
         List_of_SKUs_with_demand_upside.append([el[0], el[2]])
     else:
         perfect_demand.append([el[0],el[2]])
 
 print("====================================================================================")
-print(f"Count of downside: {len(List_of_SKUs_with_demand_downside)}")
+print(f"Number of demand downsides: {len(List_of_SKUs_with_demand_downside)}")
 print(List_of_SKUs_with_demand_downside)
-print(f"\nCount of upside: {len(List_of_SKUs_with_demand_upside)}")
+print(f"\nNumber of demand upsides: {len(List_of_SKUs_with_demand_upside)}")
 print(List_of_SKUs_with_demand_upside)
-print(f"\nCount of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside) - len(List_of_SKUs_with_demand_upside)}")
+print(f"\nNumber of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside) - len(List_of_SKUs_with_demand_upside)}")
 print(perfect_demand)
 print("====================================================================================")
 print("====================================================================================")
@@ -276,7 +291,7 @@ for row in data:
 # Create Sheet 2
 sheet2 = workbook.create_sheet(title='Problematic SKUs')
 sheet2.append(['List_of_SKUs_with_demand_downside','','List_of_SKUs_with_demand_upside',''])
-columns2 = ['PrimeItem', 'BIAS% for downside', 'PrimeItem', 'BIAS% for upside']
+columns2 = ['PrimeItem (downsides)', 'BIAS% for downsides' , 'PrimeItem (downsides)', 'BIAS% for upsides']
 sheet2.append(columns2)
 
 #if(len(data222) >= len(len(data333))):
