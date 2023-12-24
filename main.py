@@ -4,8 +4,8 @@ from datetime import datetime
 import math
 from statistics import mean
 
-file_delfor = 'DELFOR 2023.05.15.csv' # Name of delfor file
-file_demand = 'Last_demand_temp.xlsx'  # Name of demand file
+file_delfor = 'DELFOR2023.10.02.csv' # Name of delfor file
+file_demand = 'Demand.xlsx'  # Name of demand file
 
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
@@ -19,7 +19,7 @@ data_delfor = data_delfor.iloc[:, [5, 10, 11]] # Leaving only the necessary colu
 text_to_add = 'CIS-'
 data_delfor['PrimeItem'] = text_to_add + data_delfor['PrimeItem'].astype(str) # Concatenate CIS- to PrimeItem
 
-# Convert 'Column_C' from float to int
+# Convert columns from float to int
 data_delfor['Qty'] = data_delfor['Qty'].fillna(-1).astype(int)
 data_delfor['Date'] = data_delfor['Date'].fillna(-1).astype(int)
 
@@ -29,8 +29,8 @@ print("Length of FC delfor: ", len(all_FC_list))
 print("====================================================================================")
 
 for r in all_FC_list:
-    date_number = r[2]  # Replace this with your integer representing the date
-    # Convert the integer to a string and then to datetime64[ns]
+    date_number = r[2]
+    # Convert the integer to a string and then to datetime64[ns](date type)
     date_string = str(date_number)
     date_without_time = datetime.strptime(date_string, '%Y%m%d').date()
     dd = pd.Timestamp(date_without_time)
@@ -38,27 +38,18 @@ for r in all_FC_list:
 
 
 # Read the Excel file into a Pandas DataFrame
-data_demand = pd.read_excel(file_demand, sheet_name='TransactionHistory') #CLOSED SSD
-data_demand_open = pd.read_excel(file_demand, sheet_name='PlannedTransactions') #OPEN SSD
-l1 = data_demand.values.tolist()  # list of demand file I work with him for finding number of weeks
-l2 = data_demand_open.values.tolist()
+data_demand = pd.read_excel(file_demand, sheet_name='Closed SSD') #CLOSED SSD
+data_demand_open = pd.read_excel(file_demand, sheet_name='Open SSD') #OPEN SSD
+l1 = data_demand.values.tolist()  # list of demand closed ssd file I work with him for finding number of weeks
+l2 = data_demand_open.values.tolist() # list of demand open ssd file I work with him for finding number of weeks
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor
-#print(sorted_list_delfor[0][2])
+
 sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
-sorted_list2 = sorted(l2, key=lambda x: x[1])
-min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1]
-# print((sorted_list2[len(sorted_list2)-1])[1].date())
-# print((sorted_list[len(sorted_list)-1])[1].date())
-#print(sorted_list_delfor[0][2] > sorted_list[0][1])
-#print(min_date)
-last_date = True if (sorted_list2[len(sorted_list2)-1])[1].date() >= (sorted_list[len(sorted_list)-1])[1].date() else False
-n = (((sorted_list2[len(sorted_list2)-1])[1].date() if last_date else (sorted_list[len(sorted_list)-1])[1].date())) - min_date.date() # At first n is number of days between first and last dates
-n = (n/7).days + 1 # We change n to count number of weeks
-print("Number of weeks(OLD, USELESS): ", n)
-#print("====================================================================================")
+sorted_list2 = sorted(l2, key=lambda x: x[1])# sorted by date demand
+min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1] # finding minimum date  between delfor and demand
 print(l1[0])
-current_date = datetime(2023, 12, 23).date()#datetime.today().date() # CURRENT DATE
+current_date = datetime(2023, 10, 23).date()#datetime.today().date() # CURRENT DATE
 print("Current date (we do it by self)", current_date)
 # print((sorted_list2[len(sorted_list2)-1])[1].date())
 # print(current_date - (sorted_list2[len(sorted_list2)-1])[1].date())
@@ -77,13 +68,13 @@ for i in range(len(l2)):
     if(temp_c == 0):
         l1.append(l2[i])
 list_bef_cur_date = [] # list of dates less or equal curr date
-for el in l1:
+for el in l1:   # process of getting list with data where date less or equal exact(current) date
     if(el[1].date() <= current_date):
         list_bef_cur_date.append(el)
 
 print("Number of demand data: ",len(list_bef_cur_date))
 print("Number of prev try for demand (not using current date)", len(l1))
-sorted_list_demand_before_cur_d = sorted(list_bef_cur_date, key=lambda x: x[1])
+sorted_list_demand_before_cur_d = sorted(list_bef_cur_date, key=lambda x: x[1]) # sorted demand list
 n = sorted_list_demand_before_cur_d[len(sorted_list_demand_before_cur_d) - 1][1].date() - min_date.date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
 print("Number of weeks: ", n)
@@ -93,13 +84,10 @@ all_rows_as_list = list_bef_cur_date # data_demand.values.tolist() # dataframe d
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda x: x[2]) # Sorting delfor by date
 sorted_list_demand = sorted(all_rows_as_list, key=lambda x: x[1]) # Sorting demand by date
-# print("First element of delfor and demand list: ")
-# print(sorted_list_delfor[0], sorted_list_demand[0])
 print("====================================================================================")
 print("Size of delfor list and size of demand list: ")
 print(len(all_FC_list), len(all_rows_as_list))
 print("====================================================================================")
-
 
 spec_data = (sorted_list_demand[len(sorted_list_demand) - 1])[1] # last date in demand list
 temp_data = (sorted_list_delfor[len(sorted_list_delfor) - 1])[2] # last date in delfor list
@@ -114,10 +102,10 @@ print("Amount items in delfor with dates before last date in demand: ")
 print(len(arr1))
 print("====================================================================================")
 
-for l in arr1:
+for l in arr1:    # I change rows date and qty for easier calculating in future
     l[1], l[2] = l[2], l[1]
 
-for i in range(len(arr1)):
+for i in range(len(arr1)):     # I combine in delfor list qty from demand list to next process working
     for j in range(len(all_rows_as_list)):
         if((arr1[i])[0] == (all_rows_as_list[j])[0] and (arr1[i])[1] == (all_rows_as_list[j])[1]):
             arr1[i].append((all_rows_as_list[j])[2])
@@ -125,13 +113,12 @@ for i in range(len(arr1)):
 count = 0
 setf = {''}
 
-arr1 = sorted(arr1, key=lambda x: x[0])
+arr1 = sorted(arr1, key=lambda x: x[0])  # Sorting list by PrimeItem
 arr2 = [item[1] for item in all_rows_as_list]
 arrTe = [item[0] for item in all_rows_as_list]
 finalArray = []
 
 sumDemand = 0
-
 countABSFCD = 0
 countsq = 0
 sumDemAllPeriod = 1
@@ -140,11 +127,9 @@ list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
 list_of_demands_and_delfors = []
 print(arr1[len(arr1)-1])
-# Основной цикл уже для всего
+# Main loop of calculation
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
-        # if(sumDemand > 0 and forecast_allPer == 0):
-        #     List_of_SKUs_with_some_D_but_0_FCST.append((arr1[i])[0])
         BIAS = count / n
         MAE = countABSFCD / n
         RMSE = math.sqrt(countsq / n)
@@ -224,7 +209,7 @@ for i in range(len(finalArray)):
 
 print("====================================================================================")
 for el in temp2:
-    print(el)             # ЭТО ВСЁ ИТОГОВЫЙ ТО ЧТО ПЕРВАЯ ЗАДАЧА
+    print(el)
 print(len(temp2))
 print("====================================================================================")
 
@@ -264,12 +249,9 @@ print(perfect_demand)
 print("====================================================================================")
 print("====================================================================================")
 print("List demand > 0 and FC = 0: ")
-#print(len(List_of_SKUs_with_some_D_but_0_FCST))
 print(List_of_SKUs_with_some_D_but_0_FCST)
 print(f"Length of this items: {len(List_of_SKUs_with_some_D_but_0_FCST)}")
 print("====================================================================================")
-#print(List_of_SKUs_with_demand_downside)
-#print(List_of_SKUs_with_demand_upside)
 
 from openpyxl import Workbook
 
