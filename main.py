@@ -126,7 +126,7 @@ forecast_allPer = 0
 list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
 list_of_demands_and_delfors = []
-print(arr1[len(arr1)-1])
+# print(arr1[len(arr1)-1])
 # Main loop of calculation
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
@@ -208,10 +208,10 @@ for i in range(len(finalArray)):
 
 
 print("====================================================================================")
-for el in temp2:
-    print(el)
+from tabulate import tabulate
+col_names = ['PrimeItem', 'BIAS', 'Bias%', 'MAE', 'MAE%', 'RMSE', 'RMSE%', 'SCORE', 'SCORE%']
+print(tabulate(temp2, headers=col_names, tablefmt='pretty'))
 print(len(temp2))
-print("====================================================================================")
 
 
 print("====================================================================================")
@@ -224,7 +224,7 @@ print("Average MAE%: ", round(mean([item[4] for item in temp2]), 1), "%")
 print("Average RMSE%: ", round(mean([item[6] for item in temp2]), 1), "%")
 #print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
 print("Average SCORE%: ", round(mean([item[8] for item in temp2]), 1), "%")
-print("====================================================================================")
+
 
 
 List_of_SKUs_with_demand_downside = []
@@ -247,7 +247,7 @@ print(List_of_SKUs_with_demand_upside)
 print(f"\nNumber of good bias: {len(temp2) - len(List_of_SKUs_with_demand_downside) - len(List_of_SKUs_with_demand_upside)}")
 print(perfect_demand)
 print("====================================================================================")
-print("====================================================================================")
+
 print("List demand > 0 and FC = 0: ")
 print(List_of_SKUs_with_some_D_but_0_FCST)
 print(f"Length of this items: {len(List_of_SKUs_with_some_D_but_0_FCST)}")
