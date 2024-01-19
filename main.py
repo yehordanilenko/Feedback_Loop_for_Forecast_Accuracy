@@ -26,9 +26,6 @@ data_delfor['Date'] = data_delfor['Date'].fillna(-1).astype(int)
 
 import pandas as pd
 
-# Load the DELFOR data (assuming it's already loaded as data_delfor)
-# data_delfor = pd.read_csv('your_delfor_file.csv')  # Replace with your file name if not loaded
-
 # Load the ItemSubstitutes CSV file
 file_second = 'FCS_VRY_ItemSubstitutes.csv'
 data_second = pd.read_csv(file_second, delimiter='|')
@@ -36,61 +33,57 @@ data_second = pd.read_csv(file_second, delimiter='|')
 # Strip leading and trailing spaces from the 'Item Code' column
 data_second['Item Code'] = data_second['Item Code'].str.strip()
 
-import pandas as pd
+# Assuming data_delfor is your first DataFrame
+# ...
 
-# Load the DELFOR data and ItemSubstitutes CSV file (Assuming it's already loaded)
-# data_delfor = pd.read_csv('your_delfor_file.csv')  # Replace with your file name if not loaded
+# Merge the two DataFrames to get Record No. and Priority
+merged_data = pd.merge(data_delfor, data_second[['Item Code', 'Record No.', 'Priority']], left_on='PrimeItem', right_on='Item Code', how='left')
 
-# Load the ItemSubstitutes CSV file
-file_second = 'FCS_VRY_ItemSubstitutes.csv'
-data_second = pd.read_csv(file_second, delimiter='|')
-
-# Strip leading and trailing spaces from the 'Item Code' column
-data_second['Item Code'] = data_second['Item Code'].str.strip()
-
-# Merge the two DataFrames
-merged_data = pd.merge(data_delfor, data_second, left_on='PrimeItem', right_on='Item Code', how='left')
-
-# Fill NaN values in 'Priority' and 'Record No.' columns
+# Fill NaN values in 'Record No.' and 'Priority' columns
+merged_data['Record No.'] = merged_data['Record No.'].fillna(0).astype(int)
 merged_data['Priority'] = merged_data['Priority'].fillna(-1).astype(int)
-merged_data['Record No.'] = merged_data['Record No.'].fillna(-1).astype(int)
 
-# Drop unnecessary columns
-merged_data = merged_data.drop(['Item Code'], axis=1)
+# Create a dictionary mapping Record No. to PrimeItem with Priority 1
+record_no_priority_1 = dict(data_second[data_second['Priority'] == 1].set_index('Record No.')['Item Code'])
 
-# Group by 'Record No.', 'Date', and 'PrimeItem', and aggregate
-grouped_data = merged_data.groupby(['Record No.', 'Date', 'PrimeItem']).agg({
+# Apply the mapping to create a new column 'PrimeItem_Priority_1'
+merged_data['PrimeItem_Priority_1'] = merged_data['Record No.'].map(record_no_priority_1)
+
+# If 'PrimeItem_Priority_1' is NaN, use 'PrimeItem' as a fallback
+merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'], inplace=True)
+
+# Group by 'Record No.', 'Date', and 'PrimeItem_Priority_1', and aggregate
+grouped_data = merged_data.groupby(['Record No.', 'Date', 'PrimeItem_Priority_1']).agg({
     'Qty': 'sum',
-    'Priority': 'first'
 }).reset_index()
 
-# Identify groups that need a priority 1 item
-group_keys = grouped_data.groupby(['Record No.', 'Date'])['Priority']
-need_priority_1 = group_keys.transform(lambda x: 1 not in x)
+# Include rows with Record No. 0 in final_data without aggregation
+final_data = merged_data[merged_data['Record No.'] == 0][['Record No.', 'Date', 'PrimeItem', 'Qty']].reset_index(drop=True)
 
-# Use boolean indexing to filter rows
-priority_1_rows = grouped_data[need_priority_1].copy()
-priority_1_rows['Qty'] = 0
-priority_1_rows['Priority'] = 1
-
-# Concatenate the original and new priority 1 rows
-final_data = pd.concat([grouped_data, priority_1_rows], ignore_index=True)
+# Exclude rows with Record No. 0 from further processing
+grouped_data = grouped_data[grouped_data['Record No.'] != 0]
 
 # Sort and reset index if needed
-final_data = final_data.sort_values(by=['Record No.', 'Date', 'PrimeItem']).reset_index(drop=True)
+final_data = pd.concat([final_data, grouped_data], ignore_index=True).sort_values(by=['Record No.', 'Date', 'PrimeItem_Priority_1']).reset_index(drop=True)
 
-# Drop 'Priority' and 'Record No.' columns
-final_data = final_data.drop(['Priority', 'Record No.'], axis=1)
+# Drop unnecessary columns
+final_data = final_data.drop(['Record No.'], axis=1)
+
+# Fill NaN values in 'PrimeItem' with values from 'PrimeItem_Priority_1'
+final_data['PrimeItem'] = final_data['PrimeItem'].fillna(final_data['PrimeItem_Priority_1'])
+
+# Drop 'PrimeItem_Priority_1' column
+final_data = final_data.drop(['PrimeItem_Priority_1'], axis=1)
 
 # Print or use the resulting DataFrame as needed
 print(final_data)
 
 
-
+check_item = 'CIS-800-110908-01'
+needed_row = final_data[final_data['PrimeItem'] == check_item]
+print(needed_row[['PrimeItem','Date','Qty']])
 
 # Print or use the resulting DataFrame as needed
-#priority_diff_than_minus_one = merged_data[merged_data['Priority'] != -1].shape[0]
-#print("Number of rows with Priority different than -1:", priority_diff_than_minus_one)
 listx = final_data.values.tolist()
 
 # Initialize a new list to store the filtered data
@@ -116,26 +109,6 @@ total_qty = sum(item[2] for item in filtered_list)
 
 print(f"Total Quantity: {total_qty}")
 print(f"Filtered Data Length: {len(filtered_list)}")
-
-
-print("Length our new я удалил дубликаты",len(filtered_list))
-# for huy in new_temp_list:
-#     print(huy)
-
-workbook2 = Workbook()
-sheet111 = workbook2.active
-sheet111.title = 'All_data'
-cols1 = ['Date', 'Item', 'Qty']
-# Write column names to Sheet 1
-sheet111.append(cols1)
-# Write data to the worksheet
-for row in filtered_list:
-    sheet111.append(row)
-
-
-
-# Save the workbook
-workbook2.save(filename='delforchick.xlsx')
 
 
 #all_FC_list = merged_data.values.tolist() # Convert our delfor dataframe to list
@@ -171,10 +144,9 @@ sorted_list2 = sorted(l2, key=lambda x: x[1])# sorted by date demand
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1] # finding minimum date  between delfor and demand
 print(l1[0])
 print("MIN DATE", min_date)
-current_date = datetime(2023, 12, 11).date()#datetime.today().date() # CURRENT DATE
-print("Current date (we do it by self)", current_date)
-# print((sorted_list2[len(sorted_list2)-1])[1].date())
-# print(current_date - (sorted_list2[len(sorted_list2)-1])[1].date())
+current_date = datetime(2023, 10, 23).date()#datetime.today().date() # CURRENT DATE
+print("Current date (we have chosen it ourself)", current_date)
+
 list_of_demand_all = []
 
 for i in range(len(l1)):
@@ -195,13 +167,6 @@ for el in l1:   # process of getting list with data where date less or equal exa
         list_bef_cur_date.append(el)
 
 list_bef_cur_date.sort(key=lambda x: x[1])
-workbook3 = Workbook()
-shee = workbook3.active
-# Write data to the worksheet
-for row in list_bef_cur_date:
-    shee.append(row)
-# Save the workbook
-workbook3.save(filename='demand_proverka.xlsx')
 
 name_sum_dict = []  # Initialize as a list
 
@@ -394,14 +359,11 @@ for i in range(len(finalArray)):
 
 
 print("====================================================================================")
-from tabulate import tabulate
-col_names = ['PrimeItem', 'BIAS', 'Bias%', 'MAE', 'MAE%', 'RMSE', 'RMSE%', 'SCORE', 'SCORE%']
-print(tabulate(temp2, headers=col_names, tablefmt='pretty'))
-print(len(temp2))
+
 # print(temp2[(len(temp2)-1)])
 
-# for element in temp2:
-#     print(element)
+for element in temp2:
+    print(element)
 
 print("====================================================================================")
 print("Metrics: ")
@@ -468,7 +430,7 @@ for row in data:
 # Create Sheet 2
 sheet2 = workbook.create_sheet(title='Problematic SKUs')
 sheet2.append(['List_of_SKUs_with_demand_downside','','List_of_SKUs_with_demand_upside',''])
-columns2 = ['PrimeItem (downsides)', 'BIAS% for downsides' , 'PrimeItem (downsides)', 'BIAS% for upsides']
+columns2 = ['PrimeItem (downsides)', 'BIAS% for downsides' , 'PrimeItem (upsides)', 'BIAS% for upsides']
 sheet2.append(columns2)
 
 #if(len(data222) >= len(len(data333))):
@@ -498,6 +460,5 @@ sheet4.append(['PrimeItem', 'Date', 'FC', 'Demand'])
 for row in list_temp10:
     sheet4.append(row)
 # Save the workbook
-workbook.save(filename='test.xlsx')
-
+workbook.save(filename=f'ForecastAnalysisOutput{current_date}test.xlsx')
 sheet3.append([])
