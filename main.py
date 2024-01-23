@@ -24,17 +24,12 @@ data_delfor['PrimeItem'] = text_to_add + data_delfor['PrimeItem'].astype(str) # 
 data_delfor['Qty'] = data_delfor['Qty'].fillna(-1).astype(int)
 data_delfor['Date'] = data_delfor['Date'].fillna(-1).astype(int)
 
-import pandas as pd
-
 # Load the ItemSubstitutes CSV file
 file_second = 'FCS_VRY_ItemSubstitutes.csv'
 data_second = pd.read_csv(file_second, delimiter='|')
 
 # Strip leading and trailing spaces from the 'Item Code' column
 data_second['Item Code'] = data_second['Item Code'].str.strip()
-
-# Assuming data_delfor is your first DataFrame
-# ...
 
 # Merge the two DataFrames to get Record No. and Priority
 merged_data = pd.merge(data_delfor, data_second[['Item Code', 'Record No.', 'Priority']], left_on='PrimeItem', right_on='Item Code', how='left')
@@ -144,7 +139,7 @@ sorted_list2 = sorted(l2, key=lambda x: x[1])# sorted by date demand
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1] # finding minimum date  between delfor and demand
 print(l1[0])
 print("MIN DATE", min_date)
-current_date = datetime(2023, 10, 23).date()#datetime.today().date() # CURRENT DATE
+current_date = datetime(2023, 10, 30).date()#datetime.today().date() # CURRENT DATE
 print("Current date (we have chosen it ourself)", current_date)
 
 list_of_demand_all = []
@@ -272,7 +267,7 @@ for i in range(len(arr1)):
         RMSE_percent = RMSE if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
         SCORE = MAE + abs(BIAS)
         SCORE_percent = abs(BIAS if sumDemand == 0 else count / sumDemand) + (MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod)
-        list_of_demands_and_delfors.append([sumDemand, forecast_allPer])
+        list_of_demands_and_delfors.append([sumDemand, forecast_allPer, arr1[i][0]])
         last_for_demand = sumDemand
         last_for_FC = forecast_allPer
         finalArray.append([(arr1[i])[0], BIAS, BIAS_percent, MAE , MAE if sumDemAllPeriod == 0 else countABSFCD / sumDemAllPeriod, RMSE, RMSE_percent, SCORE, SCORE_percent])
@@ -309,6 +304,30 @@ for i in range(len(arr1)):
 # for element in list_temp10:
 #     print(element)
 
+from collections import defaultdict
+
+# Create a dictionary to store the aggregated values
+aggregated_data = defaultdict(lambda: [0, 0])
+for l in list_temp10:
+    if(len(l) == 3):
+        l.append(0)
+
+# Iterate through the temp10 list and aggregate values by PrimeItem
+for prime_item, _, fc, d in list_temp10:
+    aggregated_data[prime_item][0] += fc  # Sum FC
+    aggregated_data[prime_item][1] += d   # Sum D
+
+# Convert the defaultdict to a regular dictionary
+result_dict = dict(aggregated_data)
+
+# # Print the result
+# for prime_item, (total_fc, total_d) in result_dict.items():
+#     print(f"PrimeItem: {prime_item}, Total FC: {total_fc}, Total D: {total_d}")
+#
+
+listik_temp = [name for name, values in result_dict.items() if all(value == 0 for value in values)]
+
+
 for i in range(len(finalArray)-1):
     (finalArray[i])[1] = (finalArray[i + 1])[1]
     (finalArray[i])[2] = (finalArray[i + 1])[2]
@@ -320,6 +339,7 @@ for i in range(len(finalArray)-1):
     (finalArray[i])[8] = (finalArray[i + 1])[8]
     (list_of_demands_and_delfors[i])[0] = (list_of_demands_and_delfors[i+1])[0]
     (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
+    (list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
 
 (finalArray[len(finalArray)-1])[1] = count/n
 (finalArray[len(finalArray)-1])[2] = BIAS_percent
@@ -328,9 +348,18 @@ for i in range(len(finalArray)-1):
 (finalArray[len(finalArray)-1])[6] = RMSE_percent
 (finalArray[len(finalArray)-1])[7] = SCORE
 (finalArray[len(finalArray)-1])[8] = SCORE_percent
+#print("Metochka>", i, len(finalArray))
 (list_of_demands_and_delfors[i])[0] = last_for_demand
 (list_of_demands_and_delfors[i])[1] = last_for_FC
+(list_of_demands_and_delfors[i])[2] = finalArray[len(finalArray)-1][0]
 
+list_all_zeros = []
+for elemen in list_of_demands_and_delfors:
+    if(elemen[0] == elemen[1] == 0):
+        list_all_zeros.append(elemen)
+
+print(len(list_all_zeros))
+print(list_all_zeros)
 # print("FINAL ARRAY: size is \n", len(finalArray))
 # for el in finalArray:
 #     print(el)
@@ -357,7 +386,9 @@ for i in range(len(finalArray)):
         if((temp2[len(temp2) - 1])[8] != (temp2[len(temp2) - 1])[7]):
             (temp2[len(temp2) - 1])[8] = round((finalArray[i])[8] * 100, 1)
 
-
+for els in temp2:
+    if(els[0] in listik_temp):
+        els.append("No demand and no fcst")
 print("====================================================================================")
 
 # print(temp2[(len(temp2)-1)])
@@ -462,3 +493,5 @@ for row in list_temp10:
 # Save the workbook
 workbook.save(filename=f'ForecastAnalysisOutput{current_date}test.xlsx')
 sheet3.append([])
+
+
