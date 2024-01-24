@@ -1,19 +1,23 @@
 from collections import defaultdict
+from os.path import getctime, getmtime
+from time import gmtime
+
 import pandas as pd
 from datetime import datetime
 import math
 from statistics import mean
 from openpyxl import Workbook
+from pandas import DateOffset
 
-file_delfor = 'DELFOR 2023.10.09.csv' # Name of delfor file
-file_demand = 'Forecast vs Target SSD Demand V2.2.xlsx'  # Name of demand file
-
+file_delfor = 'DELFOR 2023.12.04.csv' # Name of delfor file 04-12-2023
+file_demand = 'Demand by Target SSD converter V1.0.xlsx'  # Name of demand file
+NumberOfWeeksToAnalyze = 7 # Number of forecast/demand periods to analyze
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
 data_delfor.columns = ['Col1','Col2','Col3','Col4','Col5','PrimeItem','Col7','Col8','Col9','Col10','Qty', 'Date', 'Col13'] # Assign a name for columns
 
 data_delfor = data_delfor[data_delfor['Col1'] != 'DEL.01'] # Deleting all rows with PrimeItem name DEL.01
-data_delfor = data_delfor[data_delfor['Col1'] != 'DEL.02'] # Deleting all rows with PrimeItem name DEL.01
+data_delfor = data_delfor[data_delfor['Col1'] != 'DEL.02'] # Deleting all rows with PrimeItem name DEL.02
 
 data_delfor = data_delfor.iloc[:, [5, 10, 11]] # Leaving only the necessary columns
 
@@ -28,10 +32,11 @@ data_delfor['Date'] = data_delfor['Date'].fillna(-1).astype(int)
 file_second = 'FCS_VRY_ItemSubstitutes.csv'
 data_second = pd.read_csv(file_second, delimiter='|')
 
-# Strip leading and trailing spaces from the 'Item Code' column
+# Strip/trim leading and trailing spaces from the 'Item Code' column
 data_second['Item Code'] = data_second['Item Code'].str.strip()
 
-# Merge the two DataFrames to get Record No. and Priority
+
+# Merge the two DataFrames to get Record No. and Priority left from delfor leftjoin on ItemCode on itemsubs
 merged_data = pd.merge(data_delfor, data_second[['Item Code', 'Record No.', 'Priority']], left_on='PrimeItem', right_on='Item Code', how='left')
 
 # Fill NaN values in 'Record No.' and 'Priority' columns
@@ -47,10 +52,15 @@ merged_data['PrimeItem_Priority_1'] = merged_data['Record No.'].map(record_no_pr
 # If 'PrimeItem_Priority_1' is NaN, use 'PrimeItem' as a fallback
 merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'], inplace=True)
 
+
 # Group by 'Record No.', 'Date', and 'PrimeItem_Priority_1', and aggregate
 grouped_data = merged_data.groupby(['Record No.', 'Date', 'PrimeItem_Priority_1']).agg({
     'Qty': 'sum',
 }).reset_index()
+
+#check_item = 'CIS-800-110908-01'
+#needed_row = grouped_data[grouped_data['PrimeItem_Priority_1'] == check_item]
+#print(needed_row[['Date','Qty','PrimeItem_Priority_1']])
 
 # Include rows with Record No. 0 in final_data without aggregation
 final_data = merged_data[merged_data['Record No.'] == 0][['Record No.', 'Date', 'PrimeItem', 'Qty']].reset_index(drop=True)
@@ -71,14 +81,15 @@ final_data['PrimeItem'] = final_data['PrimeItem'].fillna(final_data['PrimeItem_P
 final_data = final_data.drop(['PrimeItem_Priority_1'], axis=1)
 
 # Print or use the resulting DataFrame as needed
-print(final_data)
+# print(final_data)
 
 
-check_item = 'CIS-800-110908-01'
-needed_row = final_data[final_data['PrimeItem'] == check_item]
-print(needed_row[['PrimeItem','Date','Qty']])
+#check_item = 'CIS-800-110908-01'
+#needed_row = final_data[final_data['PrimeItem'] == check_item]
+#print(needed_row[['PrimeItem','Date','Qty']])
 
 # Print or use the resulting DataFrame as needed
+# MV - Code below is to groupby prime item, to prevent duplicate item and date cobmbination as a result of primeitem translation
 listx = final_data.values.tolist()
 
 # Initialize a new list to store the filtered data
@@ -102,9 +113,9 @@ for item in listx:
 # If you want to calculate the total qty again, you can do so with the filtered data
 total_qty = sum(item[2] for item in filtered_list)
 
-print(f"Total Quantity: {total_qty}")
-print(f"Filtered Data Length: {len(filtered_list)}")
-
+print("====================================================================================")
+print(f"Total forecast quantity: {total_qty}")
+print(f"Total rows of delfor data: {len(filtered_list)}")
 
 #all_FC_list = merged_data.values.tolist() # Convert our delfor dataframe to list
 all_FC_list = filtered_list
@@ -113,8 +124,8 @@ for sublist in all_FC_list:
 
 for sublist in all_FC_list:
     sublist[1], sublist[2] = sublist[2], sublist[1]
-print("====================================================================================")
-print("Length of FC delfor: ", len(all_FC_list))
+
+print("Total rows of adjusted delfor data: ", len(all_FC_list))
 print("====================================================================================")
 
 for r in all_FC_list:
@@ -124,7 +135,6 @@ for r in all_FC_list:
     date_without_time = datetime.strptime(date_string, '%Y%m%d').date()
     dd = pd.Timestamp(date_without_time)
     r[2] = dd                                   # convert int to data
-
 
 # Read the Excel file into a Pandas DataFrame
 data_demand = pd.read_excel(file_demand, sheet_name='TransactionHistory') #CLOSED SSD
@@ -137,11 +147,15 @@ sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates 
 sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
 sorted_list2 = sorted(l2, key=lambda x: x[1])# sorted by date demand
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1] # finding minimum date  between delfor and demand
-print(l1[0])
-print("MIN DATE", min_date)
-current_date = datetime(2023, 10, 30).date()#datetime.today().date() # CURRENT DATE
-print("Current date (we have chosen it ourself)", current_date)
 
+current_date = datetime.date(min_date + DateOffset(weeks=NumberOfWeeksToAnalyze-1)) # CURRENT DATE / # V1 code >> datetime.today().date() / # V2 code >> datetime(2024, 1, 7).date()
+
+#print(l1[0])
+print("Number of weeks to analyze: ", NumberOfWeeksToAnalyze)
+print("Start date: ", datetime.date(min_date))
+print("End date:   ", current_date) #based on first period in delfor + selected number of week
+print("====================================================================================")
+#Cycle for appending/grouping demand from open and closed demand. If date and item in both files, then sum qty.
 list_of_demand_all = []
 
 for i in range(len(l1)):
@@ -185,7 +199,7 @@ for sublist in dem_cop:
         name_sum_dict.append([name, value])
 
 # Print the result
-#print(name_sum_dict)
+# print(name_sum_dict)
 
 
 # Extract unique names from name_sum_dict
@@ -193,28 +207,33 @@ unique_names_in_dict = set(name for name, _ in name_sum_dict)
 
 # Create a new list of names that are in name_sum_dict but not in list2
 
-print("length filtered data", len(filtered_list))
+print("length filtered data: ", len(filtered_list))
 #print([item[0] for item in filtered_list])
-extra_list = [name for name in unique_names_in_dict if name not in [item[0] for item in filtered_list]]
-print(len(name_sum_dict))
-# Print the result
-print(len(extra_list), extra_list)
 
-print("Number of demand data: ",len(list_bef_cur_date))
-print("Number of prev try for demand (not using current date)", len(l1))
+extra_list = [name for name in unique_names_in_dict if name not in [item[0] for item in filtered_list]]
+
+# print(len(name_sum_dict))
+# Print the result
+# print(len(extra_list), extra_list)
+
+print("Number of rows in demand file before end date: ",len(list_bef_cur_date))
+print("Number of rows in demand file: ", len(l1))
+
 sorted_list_demand_before_cur_d = sorted(list_bef_cur_date, key=lambda x: x[1]) # sorted demand list
 n = sorted_list_demand_before_cur_d[len(sorted_list_demand_before_cur_d) - 1][1].date() - min_date.date() # At first n is number of days between first and last dates
 n = (n/7).days + 1 # We change n to count number of weeks
-print("Number of weeks: ", n)
+
+print("Number of weeks between end and start date:    ", n)
 print("====================================================================================")
 
 all_rows_as_list = list_bef_cur_date # data_demand.values.tolist() # dataframe demand to list
 
 sorted_list_delfor = sorted(all_FC_list, key=lambda x: x[2]) # Sorting delfor by date
 sorted_list_demand = sorted(all_rows_as_list, key=lambda x: x[1]) # Sorting demand by date
-print("====================================================================================")
-print("Size of delfor list and size of demand list: ")
-print(len(all_FC_list), len(all_rows_as_list))
+
+print("Validation of rows in delfor demand list: ")
+print("Rows in forecast: ", len(all_FC_list))
+print("Rows in demand: ",len(all_rows_as_list))
 print("====================================================================================")
 
 spec_data = (sorted_list_demand[len(sorted_list_demand) - 1])[1] # last date in demand list
@@ -225,9 +244,8 @@ for i in range(len(all_FC_list)):
     if((all_FC_list[i])[2] <= spec_data ):
         arr1.append(all_FC_list[i])
 
-print("====================================================================================")
-print("Amount items in delfor with dates before last date in demand: ")
-print(len(arr1))
+
+print("Number of items in forecast before", current_date ,": ", len(arr1))
 print("====================================================================================")
 
 for l in arr1:    # I change rows date and qty for easier calculating in future
@@ -253,15 +271,17 @@ sumDemAllPeriod = 1
 forecast_allPer = 0
 list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
+List_of_SKUs_with_0_D_but_some_FCST = []
 list_of_demands_and_delfors = []
-print("FIRST DATA", arr1[0])
-print(len(arr1))
-print("LAST DATA",arr1[len(arr1)-1])
-# Main loop of calculation
+#print("FIRST DATA", arr1[0])
+#print(len(arr1))
+#print("LAST DATA",arr1[len(arr1)-1])
+
+#Main loop of calculation
 for i in range(len(arr1)):
     if ((arr1[i])[0] not in setf):
         BIAS = count / n
-        BIAS_percent = BIAS if sumDemand == 0 else count/sumDemand
+        BIAS_percent = sumDemand if sumDemand == 0 else count/sumDemand # MVO 20240123: BIAS if sumDemand == 0 else count/sumDemand
         MAE = countABSFCD / n
         RMSE = math.sqrt(countsq / n)
         RMSE_percent = RMSE if sumDemAllPeriod == 0 else RMSE/(sumDemAllPeriod/n)
@@ -282,16 +302,19 @@ for i in range(len(arr1)):
 
     setf.add((arr1[i])[0])
 
+#variables for metric calculations
     if((arr1[i])[1] in arr2):
         if(len(arr1[i]) == 4):
-            count+= (arr1[i])[2] - (arr1[i])[3]
-            countsq+= ((arr1[i])[2] - (arr1[i])[3])**2
-            sumDemand+=(arr1[i])[3]
-            countABSFCD += abs((arr1[i])[2] - (arr1[i])[3])
-            sumDemAllPeriod+=(arr1[i])[3]
-            forecast_allPer += (arr1[i])[2]
+            count += (arr1[i])[2] - (arr1[i])[3] #diff for Bias
+            countsq += ((arr1[i])[2] - (arr1[i])[3])**2
+            sumDemand += (arr1[i])[3]
+            countABSFCD += abs((arr1[i])[2] - (arr1[i])[3]) #diff for MAE
+            sumDemAllPeriod += (arr1[i])[3] #total demand
+            forecast_allPer += (arr1[i])[2] #total forecast
             if(arr1[i][0] in arrTe):
                 list_temp10.append([arr1[i][0], arr1[i][1], arr1[i][2], arr1[i][3]])
+
+        #else is case no demand
         else:
             count+= (arr1[i])[2]
             countsq+= ((arr1[i])[2])**2
@@ -327,7 +350,6 @@ result_dict = dict(aggregated_data)
 
 listik_temp = [name for name, values in result_dict.items() if all(value == 0 for value in values)]
 
-
 for i in range(len(finalArray)-1):
     (finalArray[i])[1] = (finalArray[i + 1])[1]
     (finalArray[i])[2] = (finalArray[i + 1])[2]
@@ -341,6 +363,7 @@ for i in range(len(finalArray)-1):
     (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
     (list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
 
+
 (finalArray[len(finalArray)-1])[1] = count/n
 (finalArray[len(finalArray)-1])[2] = BIAS_percent
 (finalArray[len(finalArray)-1])[3] = countABSFCD/n
@@ -348,75 +371,84 @@ for i in range(len(finalArray)-1):
 (finalArray[len(finalArray)-1])[6] = RMSE_percent
 (finalArray[len(finalArray)-1])[7] = SCORE
 (finalArray[len(finalArray)-1])[8] = SCORE_percent
-#print("Metochka>", i, len(finalArray))
-(list_of_demands_and_delfors[i])[0] = last_for_demand
-(list_of_demands_and_delfors[i])[1] = last_for_FC
-(list_of_demands_and_delfors[i])[2] = finalArray[len(finalArray)-1][0]
-
-list_all_zeros = []
-for elemen in list_of_demands_and_delfors:
-    if(elemen[0] == elemen[1] == 0):
-        list_all_zeros.append(elemen)
-
-print(len(list_all_zeros))
-print(list_all_zeros)
+(list_of_demands_and_delfors[len(list_of_demands_and_delfors)-1])[0] = last_for_demand
+(list_of_demands_and_delfors[len(list_of_demands_and_delfors)-1])[1] = last_for_FC
+(list_of_demands_and_delfors[len(list_of_demands_and_delfors)-1])[2] = finalArray[len(finalArray)-1][0]
+print(list_of_demands_and_delfors)
+print("ВОТ ВОТ ВОТ")
+for i in range(len(list_of_demands_and_delfors)-1):
+    (list_of_demands_and_delfors[i])[0] = (list_of_demands_and_delfors[i+1])[0]
+    (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
+    #(list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
+print(list_of_demands_and_delfors)
 # print("FINAL ARRAY: size is \n", len(finalArray))
 # for el in finalArray:
 #     print(el)
 
+
+ #creating list for all items with demand > 0  and Forecast is 0
 for i in range(len(list_of_demands_and_delfors)):
-    if(list_of_demands_and_delfors[i][0] > 0 and list_of_demands_and_delfors[i][1] == 0):
-        List_of_SKUs_with_some_D_but_0_FCST.append(finalArray[i][0])
+     if(list_of_demands_and_delfors[i][0] > 0 and list_of_demands_and_delfors[i][1] == 0):
+         List_of_SKUs_with_some_D_but_0_FCST.append(list_of_demands_and_delfors[i][2])
+
+#creating list for all items with demand = 0  and Forecast > 0
+for i in range(len(list_of_demands_and_delfors)):
+     if(list_of_demands_and_delfors[i][0] == 0 and list_of_demands_and_delfors[i][1] > 0):
+         List_of_SKUs_with_0_D_but_some_FCST.append(list_of_demands_and_delfors[i][2])
 
 
 
 finalArray.pop()
-
+List_of_SKUs_with_0_D_but_some_FCST.pop()
+List_of_SKUs_with_0_D_but_some_FCST.pop()
 temp2 = []  # THIS FINAL LIST
 
 for i in range(len(finalArray)):
     if((finalArray[i])[0] in arrTe):
         temp2.append(finalArray[i])
         if((temp2[len(temp2) - 1])[2] != (temp2[len(temp2) - 1])[1]):
-            (temp2[len(temp2)-1])[2] = round((finalArray[i])[2] * 100, 1)
+            (temp2[len(temp2)-1])[2] = round((finalArray[i])[2], 3)
+            #orignal code      (temp2[len(temp2)-1])[2] = round((finalArray[i])[2] * 100, 1)
         if((temp2[len(temp2) - 1])[4] != (temp2[len(temp2) - 1])[3]):
-            (temp2[len(temp2) - 1])[4] = round((finalArray[i])[4] * 100, 1)
+            (temp2[len(temp2) - 1])[4] = round((finalArray[i])[4], 3)
         if((temp2[len(temp2) - 1])[6] != (temp2[len(temp2) - 1])[5]):
-            (temp2[len(temp2) - 1])[6] = round((finalArray[i])[6] * 100, 1)
+            (temp2[len(temp2) - 1])[6] = round((finalArray[i])[6], 3)
         if((temp2[len(temp2) - 1])[8] != (temp2[len(temp2) - 1])[7]):
-            (temp2[len(temp2) - 1])[8] = round((finalArray[i])[8] * 100, 1)
+            (temp2[len(temp2) - 1])[8] = round((finalArray[i])[8], 3)
 
 for els in temp2:
     if(els[0] in listik_temp):
         els.append("No demand and no fcst")
+
 print("====================================================================================")
 
 # print(temp2[(len(temp2)-1)])
 
-for element in temp2:
-    print(element)
+#for element in temp2:
+#print(element)
 
 print("====================================================================================")
 print("Metrics: ")
 #print("Metrics of BIAS: ", mean([item[1] for item in temp2]))
-print("Average BIAS%: ", round(mean([item[2] for item in temp2]), 1), "%")
+print("Average BIAS%: ", round(mean([item[2] for item in temp2]) * 100, 1), "%")
 #print("Metrics of MAE: ", mean([item[3] for item in temp2]))
-print("Average MAE%: ", round(mean([item[4] for item in temp2]), 1), "%")
+print("Average MAE%: ", round(mean([item[4] for item in temp2]) * 100, 1), "%")
 #print("Metrics of RMSE: ", mean([item[5] for item in temp2]))
-print("Average RMSE%: ", round(mean([item[6] for item in temp2]), 1), "%")
+print("Average RMSE%: ", round(mean([item[6] for item in temp2]) * 100, 1), "%")
 #print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
-print("Average SCORE%: ", round(mean([item[8] for item in temp2]), 1), "%")
-
+print("Average SCORE%: ", round(mean([item[8] for item in temp2]) * 100, 1), "%")
+print(extra_list)
 
 
 List_of_SKUs_with_demand_downside = []
 List_of_SKUs_with_demand_upside = []
 perfect_demand = []
 
+#
 for el in temp2:
-    if(el[2] > 30 ):
+    if(el[2] > 0.30 ):
         List_of_SKUs_with_demand_downside.append([el[0], el[2]])
-    elif(el[2] < -30):
+    elif(el[2] < -0.30):
         List_of_SKUs_with_demand_upside.append([el[0], el[2]])
     else:
         perfect_demand.append([el[0],el[2]])
@@ -431,10 +463,9 @@ print(perfect_demand)
 print("====================================================================================")
 
 print("List demand > 0 and FC = 0: ")
-List_of_SKUs_with_some_D_but_0_FCST.extend(extra_list)
-#print(List_of_SKUs_with_some_D_but_0_FCST)
-# Remove duplicates from original_list in place
-List_of_SKUs_with_some_D_but_0_FCST = [item for index, item in enumerate(List_of_SKUs_with_some_D_but_0_FCST) if item not in List_of_SKUs_with_some_D_but_0_FCST[:index]]
+# List_of_SKUs_with_some_D_but_0_FCST.extend(extra_list)
+# # Remove duplicates from original_list in place
+# List_of_SKUs_with_some_D_but_0_FCST = [item for index, item in enumerate(List_of_SKUs_with_some_D_but_0_FCST) if item not in List_of_SKUs_with_some_D_but_0_FCST[:index]]
 
 # Print the result
 print(f"Length of this items: {len(List_of_SKUs_with_some_D_but_0_FCST)}")
@@ -443,11 +474,19 @@ print("=========================================================================
 
 
 
+print("List demand = 0 and FC > 0: ")
+# Remove duplicates from original_list in place
+List_of_SKUs_with_0_D_but_some_FCST = [item for index, item in enumerate(List_of_SKUs_with_0_D_but_some_FCST) if item not in List_of_SKUs_with_0_D_but_some_FCST[:index]]
+# Print the result
+print(f"Length of this items: {len(List_of_SKUs_with_0_D_but_some_FCST)}")
+print(List_of_SKUs_with_0_D_but_some_FCST)
+print("====================================================================================")
+
 # Work with write in file
 data = temp2
 data222 = List_of_SKUs_with_demand_downside
 data333 = List_of_SKUs_with_demand_upside
-columns1 = ['PrimeItem','Bias','Bias%','MAE','MAE%','RMSE','RMSE%','Score','Score%']
+columns1 = ['PrimeItem','Bias','Bias%','MAE','MAE%','RMSE','RMSE%','Score','Score%', 'Comment']
 # Create a new workbook and select the active worksheet
 workbook = Workbook()
 sheet1 = workbook.active
@@ -480,18 +519,31 @@ for row in combined_list:
 sheet2.append([])
 
 sheet3 = workbook.create_sheet(title='Items with some D but 0 FCST')
-sheet3.append(['List items demand > 0 and FCST =0'])
+sheet3.append(['List items demand > 0 and FCST = 0'])
 sheet3.append(['PrimeItem'])
 for row in List_of_SKUs_with_some_D_but_0_FCST:
     sheet3.append([row])
 
-sheet4 = workbook.create_sheet(title='D vs FC')
-sheet4.append(['PrimeItem', 'Date', 'FC', 'Demand'])
+sheet4 = workbook.create_sheet(title='Items with 0 D but some FCST')
+sheet4.append(['List items demand = 0 and FCST > 0'])
+sheet4.append(['PrimeItem'])
+for row in List_of_SKUs_with_0_D_but_some_FCST:
+    sheet4.append([row])
+
+sheet5 = workbook.create_sheet(title='D vs FC')
+sheet5.append(['PrimeItem', 'Date', 'FC', 'Demand'])
 
 for row in list_temp10:
-    sheet4.append(row)
-# Save the workbook
-workbook.save(filename=f'ForecastAnalysisOutput{current_date}test.xlsx')
+    sheet5.append(row)
+
+
+
+# # Save the workbook
+# filepath = 'C:/Users/vrymvolm/OneDrive - Flex/Projecten/202310 - Forecast vs Target SSD Demand/'
+# filename = ' - ForecastAnalysis'
+# extention = '.xlsx'
+# current_date_string = str(current_date)
+# CountOfWeeks = str(n)
+#  workbook.save(filename= filepath + current_date_string + filename + CountOfWeeks + extention)
+workbook.save(filename='Forecast Analysis test output 2.xlsx')
 sheet3.append([])
-
-
