@@ -1,14 +1,16 @@
+from collections import defaultdict
+from os.path import getctime, getmtime
+from time import gmtime
+
 import pandas as pd
 from datetime import datetime
 import math
 from statistics import mean
-
-
 from openpyxl import Workbook
 from pandas import DateOffset
 
-file_delfor = ('DELFOR 2023.12.04.csv') #Name of delfor file 04-12-2023
-file_demand = 'Demand by Target SSD converter V1.0.xlsx'  #Name of demand file
+file_delfor = 'DELFOR 2023.12.04.csv' # Name of delfor file 04-12-2023
+file_demand = 'Demand by Target SSD converter V1.0.xlsx'  # Name of demand file
 NumberOfWeeksToAnalyze = 7 # Number of forecast/demand periods to analyze
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
@@ -33,6 +35,7 @@ data_second = pd.read_csv(file_second, delimiter='|')
 # Strip/trim leading and trailing spaces from the 'Item Code' column
 data_second['Item Code'] = data_second['Item Code'].str.strip()
 
+
 # Merge the two DataFrames to get Record No. and Priority left from delfor leftjoin on ItemCode on itemsubs
 merged_data = pd.merge(data_delfor, data_second[['Item Code', 'Record No.', 'Priority']], left_on='PrimeItem', right_on='Item Code', how='left')
 
@@ -48,6 +51,7 @@ merged_data['PrimeItem_Priority_1'] = merged_data['Record No.'].map(record_no_pr
 
 # If 'PrimeItem_Priority_1' is NaN, use 'PrimeItem' as a fallback
 merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'], inplace=True)
+
 
 # Group by 'Record No.', 'Date', and 'PrimeItem_Priority_1', and aggregate
 grouped_data = merged_data.groupby(['Record No.', 'Date', 'PrimeItem_Priority_1']).agg({
@@ -79,12 +83,13 @@ final_data = final_data.drop(['PrimeItem_Priority_1'], axis=1)
 # Print or use the resulting DataFrame as needed
 # print(final_data)
 
+
 #check_item = 'CIS-800-110908-01'
 #needed_row = final_data[final_data['PrimeItem'] == check_item]
 #print(needed_row[['PrimeItem','Date','Qty']])
 
 # Print or use the resulting DataFrame as needed
-# MV - Code below is to groupby prime item, to prevent duplicate item and date combination as a result of primeitem translation
+# MV - Code below is to groupby prime item, to prevent duplicate item and date cobmbination as a result of primeitem translation
 listx = final_data.values.tolist()
 
 # Initialize a new list to store the filtered data
@@ -112,8 +117,6 @@ print("=========================================================================
 print(f"Total forecast quantity: {total_qty}")
 print(f"Total rows of delfor data: {len(filtered_list)}")
 
-#print('@@Filtered list: ',filtered_list)
-
 #all_FC_list = merged_data.values.tolist() # Convert our delfor dataframe to list
 all_FC_list = filtered_list
 for sublist in all_FC_list:
@@ -133,19 +136,18 @@ for r in all_FC_list:
     dd = pd.Timestamp(date_without_time)
     r[2] = dd                                   # convert int to data
 
-sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor MVO 20240125 - move from row 142 to 135
-#print('@@Sorted list delfor: ',sorted_list_delfor)
-
 # Read the Excel file into a Pandas DataFrame
 data_demand = pd.read_excel(file_demand, sheet_name='TransactionHistory') #CLOSED SSD
 data_demand_open = pd.read_excel(file_demand, sheet_name='PlannedTransactions') #OPEN SSD
 l1 = data_demand.values.tolist()  # list of demand closed ssd file I work with it for find number of weeks
 l2 = data_demand_open.values.tolist() # list of demand open ssd file I work with it to find number of weeks
 
+sorted_list_delfor = sorted(all_FC_list, key=lambda  x: x[2]) # sorted by dates delfor
+
 sorted_list = sorted(l1, key=lambda x: x[1]) # sorted by date demand
 sorted_list2 = sorted(l2, key=lambda x: x[1])# sorted by date demand
-
 min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0][1] else sorted_list[0][1] # finding minimum date  between delfor and demand
+
 current_date = datetime.date(min_date + DateOffset(weeks=NumberOfWeeksToAnalyze-1)) # CURRENT DATE / # V1 code >> datetime.today().date() / # V2 code >> datetime(2024, 1, 7).date()
 
 #print(l1[0])
@@ -153,7 +155,6 @@ print("Number of weeks to analyze: ", NumberOfWeeksToAnalyze)
 print("Start date: ", datetime.date(min_date))
 print("End date:   ", current_date) #based on first period in delfor + selected number of week
 print("====================================================================================")
-
 #Cycle for appending/grouping demand from open and closed demand. If date and item in both files, then sum qty.
 list_of_demand_all = []
 
@@ -169,15 +170,12 @@ for i in range(len(l2)):
             temp_c += 1
     if(temp_c == 0):
         l1.append(l2[i])
-
-list_bef_cur_date = [] # list of dates less or equal curr date || MVO 20240124 with adjustment on between start and end date
+list_bef_cur_date = [] # list of dates less or equal curr date
 for el in l1:   # process of getting list with data where date less or equal exact(current) date
-    if(el[1].date() <= current_date) and (el[1].date() >= datetime.date(min_date)): #|| MVO 20240124 adjustment to get data between start and end date
+    if(el[1].date() <= current_date):
         list_bef_cur_date.append(el)
 
-list_bef_cur_date.sort(key=lambda x: (x[0], x[1]))
-
-#print('## list of demand', list_bef_cur_date) #@@
+list_bef_cur_date.sort(key=lambda x: x[1])
 
 name_sum_dict = []  # Initialize as a list
 
@@ -201,43 +199,22 @@ for sublist in dem_cop:
         name_sum_dict.append([name, value])
 
 # Print the result
-#print('## list of summed demand by item',name_sum_dict)
+# print(name_sum_dict)
 
 
 # Extract unique names from name_sum_dict
-unique_names_in_dict = set(item for item, _ in name_sum_dict)
-#print(unique_names_in_dict)
-#print(len(unique_names_in_dict))
+unique_names_in_dict = set(name for name, _ in name_sum_dict)
 
 # Create a new list of names that are in name_sum_dict but not in list2
+
 print("length filtered data: ", len(filtered_list))
 #print([item[0] for item in filtered_list])
 
-unique_names_in_filtered_list = []
-unique_names_in_filtered_list = set([item[0] for item in filtered_list])
+extra_list = [name for name in unique_names_in_dict if name not in [item[0] for item in filtered_list]]
 
-print(unique_names_in_filtered_list)
-print(len(unique_names_in_filtered_list))
-
-extra_list = [item for item in unique_names_in_dict if item not in unique_names_in_filtered_list]
-
-unique_names_in_extra_list = []
-unique_names_in_extra_list = set(name for name in extra_list)
-
-print(unique_names_in_extra_list)
-print(len(unique_names_in_extra_list))
-
-Full_Item_List = []
-Full_Item_List = list(unique_names_in_dict.union(unique_names_in_filtered_list))
-
-print(Full_Item_List)
-print(len(Full_Item_List))
-
-
-
-#print(len(name_sum_dict))
+# print(len(name_sum_dict))
 # Print the result
-#print(len(extra_list), extra_list)
+# print(len(extra_list), extra_list)
 
 print("Number of rows in demand file before end date: ",len(list_bef_cur_date))
 print("Number of rows in demand file: ", len(l1))
@@ -254,20 +231,6 @@ all_rows_as_list = list_bef_cur_date # data_demand.values.tolist() # dataframe d
 sorted_list_delfor = sorted(all_FC_list, key=lambda x: x[2]) # Sorting delfor by date
 sorted_list_demand = sorted(all_rows_as_list, key=lambda x: x[1]) # Sorting demand by date
 
-Dates_In_Selected_Period = set(item[1] for item in list_bef_cur_date)
-Dates_In_Selected_Period_List = sorted(list(Dates_In_Selected_Period))
-print('Dates in selected period: ',Dates_In_Selected_Period_List)
-
-items_with_dates = Full_Item_List
-additional_dates = Dates_In_Selected_Period_List
-
-unique_combinations = set((item, date) for item in Full_Item_List for date in Dates_In_Selected_Period_List)
-unique_combinations_list = sorted(list(unique_combinations), key=lambda x: (x[0], x[1]))
-print('@@ :',unique_combinations_list)
-print('#Items from list: ',len(Full_Item_List))
-print('#Rows of items combined with dates: ',len(unique_combinations_list))
-
-
 print("Validation of rows in delfor demand list: ")
 print("Rows in forecast: ", len(all_FC_list))
 print("Rows in demand: ",len(all_rows_as_list))
@@ -280,60 +243,41 @@ arr1 = []   # list data FC before last date in demand including this date
 for i in range(len(all_FC_list)):
     if((all_FC_list[i])[2] <= spec_data ):
         arr1.append(all_FC_list[i])
-#print(list_bef_cur_date)
-#print(all_FC_list)
-
-# Organize demand data into a dictionary
-filtered_demand_data = [(item, date, qty) if len((item, date, qty)) >= 3 else (item, date, qty) for item, date, qty, *_ in list_bef_cur_date]
-
-print(unique_combinations_list)
-
-demand_data = filtered_demand_data
-forecast_data = all_FC_list
 
 
-# Extract the first three columns from each row, filling missing values with 0
-filtered_demand_data = [
-   (item, date, qty) if len((item, date, qty)) >= 3 else (item, date, 0) for item, date, qty, *_ in demand_data
-]
-# Organize demand data into a dictionary
-demand_dict = {(item, date): qty for item, date, qty in filtered_demand_data}
-# Organize forecast data into a dictionary
-
-forecast_dict = {(item, date): qty for item, qty, date in forecast_data}
-# Create a list of tuples with item, date, demand, and forecast (filling blanks with 0)
-combined_data_mvo = [
-   (item, date, forecast_dict.get((item, date), 0), demand_dict.get((item, date), 0))
-   for item, date in unique_combinations_list
-]
-
-print('Full item list with demand and forecast: ',combined_data_mvo)
-print('Rows in full item list with demand and forecast: ',len(combined_data_mvo))
-
-# Create a DataFrame from combined_data
-df = pd.DataFrame(combined_data_mvo, columns=['Item', 'Date', 'Demand', 'Forecast'])
-# Write the DataFrame to an Excel file
-df.to_excel('output_file.xlsx', index=False)
-
-#print(' @@ FC list' , all_FC_list)
 print("Number of items in forecast before", current_date ,": ", len(arr1))
 print("====================================================================================")
 
-# Change column sequence for easy calculation in future. New sequence is (Item, Date, Fc)
-#for l in arr1:
-#    l[1], l[2] = l[2], l[1]
+for l in arr1:    # I change rows date and qty for easier calculating in future
+    l[1], l[2] = l[2], l[1]
 
-#print(arr1)
-
-#for i in range(len(arr1)):     # I combine in delfor list qty from demand list to next process working
-#    for j in range(len(all_rows_as_list)):
- #       if((arr1[i])[0] == (all_rows_as_list[j])[0] and (arr1[i])[1] == (all_rows_as_list[j])[1]):
- #           arr1[i].append((all_rows_as_list[j])[2])
+for i in range(len(arr1)):     # I combine in delfor list qty from demand list to next process working
+    for j in range(len(all_rows_as_list)):
+        if((arr1[i])[0] == (all_rows_as_list[j])[0] and (arr1[i])[1] == (all_rows_as_list[j])[1]):
+            arr1[i].append((all_rows_as_list[j])[2])
 
 count = 0
 setf = {''}
 
-arr1 = combined_data_mvo #sorted(arr1, key=lambda x: x[0])  # Sorting list by PrimeItem
+
+arr1 = sorted(arr1, key=lambda x: x[0])  # Sorting list by PrimeItem
+print(all_rows_as_list[0])
+print("НАчал пробовать изменения ")
+print(len(arr1))
+for i in range(len(all_rows_as_list)):
+    counter1 = 0
+    for j in range(len(arr1)):
+        if(all_rows_as_list[i][0] == arr1[j][0]):
+            counter1+=1
+            break
+
+    if(counter1 == 0 and all_rows_as_list[i][1].date() < current_date):
+        tem_l = [all_rows_as_list[i][0], all_rows_as_list[i][1], all_rows_as_list[i][2]]
+        arr1.append(tem_l)
+
+print(len(arr1))
+
+print("закончил")
 arr2 = [item[1] for item in all_rows_as_list]
 arrTe = [item[0] for item in all_rows_as_list]
 finalArray = []
@@ -350,8 +294,6 @@ list_of_demands_and_delfors = []
 #print("FIRST DATA", arr1[0])
 #print(len(arr1))
 #print("LAST DATA",arr1[len(arr1)-1])
-
-#print("@@ arr1", arr1)
 
 #Main loop of calculation
 for i in range(len(arr1)):
@@ -437,7 +379,7 @@ for i in range(len(finalArray)-1):
     (finalArray[i])[8] = (finalArray[i + 1])[8]
     (list_of_demands_and_delfors[i])[0] = (list_of_demands_and_delfors[i+1])[0]
     (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
-    (list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i+1])[2]
+    (list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
 
 
 (finalArray[len(finalArray)-1])[1] = count/n
@@ -457,7 +399,6 @@ for i in range(len(list_of_demands_and_delfors)-1):
     (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
     #(list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
 print(list_of_demands_and_delfors)
-print(len(list_of_demands_and_delfors))
 # print("FINAL ARRAY: size is \n", len(finalArray))
 # for el in finalArray:
 #     print(el)
@@ -514,6 +455,8 @@ print("Average MAE%: ", round(mean([item[4] for item in temp2]) * 100, 1), "%")
 print("Average RMSE%: ", round(mean([item[6] for item in temp2]) * 100, 1), "%")
 #print("Metrics of SCORE: ", mean([item[7] for item in temp2]))
 print("Average SCORE%: ", round(mean([item[8] for item in temp2]) * 100, 1), "%")
+print(extra_list)
+
 
 List_of_SKUs_with_demand_downside = []
 List_of_SKUs_with_demand_upside = []
@@ -608,16 +551,44 @@ for row in List_of_SKUs_with_0_D_but_some_FCST:
 sheet5 = workbook.create_sheet(title='D vs FC')
 sheet5.append(['PrimeItem', 'Date', 'FC', 'Demand'])
 
-for row in arr1:
+for row in list_temp10:
     sheet5.append(row)
 
+
+
 # # Save the workbook
-filepath = '202310 - Forecast vs Target SSD Demand/'
-filename = 'ForecastAnalysis'
-extention = '.xlsx'
-current_date_string = str(current_date)
-CountOfWeeks = str(n)
-workbook.save(filename= current_date_string + filename + CountOfWeeks + extention)
-# workbook.save(filename='Forecast Analysis test output 2.xlsx')
+# filepath = 'C:/Users/vrymvolm/OneDrive - Flex/Projecten/202310 - Forecast vs Target SSD Demand/'
+# filename = ' - ForecastAnalysis'
+# extention = '.xlsx'
+# current_date_string = str(current_date)
+# CountOfWeeks = str(n)
+#  workbook.save(filename= filepath + current_date_string + filename + CountOfWeeks + extention)
+workbook.save(filename='Forecast Analysis test output 2.xlsx')
 sheet3.append([])
+
+print(len(arr1))
+print(len(list_of_demands_and_delfors))
+r_var = 0
+
+list_items_DandFC_more1 = []
+
+for el in arr1:
+    if(len(el) == 4):
+        if(el[2] >= 1 and el[3] >= 1):
+            r_var+=1
+            list_items_DandFC_more1.append(el)
+
+print(r_var)
+
+# for p in arr1:
+#     print(p)
+
+# Extract unique names
+unique_names = set(item[0] for item in arr1)
+
+# Convert set to list if needed
+unique_names_list = list(unique_names)
+print(unique_names_list)
+# Print the result
+print(len(unique_names_list))
 
