@@ -117,7 +117,7 @@ print("=========================================================================
 print(f"Total forecast quantity: {total_qty}")
 print(f"Total rows of delfor data: {len(filtered_list)}")
 
-#all_FC_list = merged_data.values.tolist() # Convert our delfor dataframe to list
+
 all_FC_list = filtered_list
 for sublist in all_FC_list:
     sublist[0], sublist[1] = sublist[1], sublist[0]
@@ -150,7 +150,6 @@ min_date = sorted_list_delfor[0][2] if sorted_list_delfor[0][2] > sorted_list[0]
 
 current_date = datetime.date(min_date + DateOffset(weeks=NumberOfWeeksToAnalyze-1)) # CURRENT DATE / # V1 code >> datetime.today().date() / # V2 code >> datetime(2024, 1, 7).date()
 
-#print(l1[0])
 print("Number of weeks to analyze: ", NumberOfWeeksToAnalyze)
 print("Start date: ", datetime.date(min_date))
 print("End date:   ", current_date) #based on first period in delfor + selected number of week
@@ -198,9 +197,6 @@ for sublist in dem_cop:
     if not name_exists:
         name_sum_dict.append([name, value])
 
-# Print the result
-# print(name_sum_dict)
-
 
 # Extract unique names from name_sum_dict
 unique_names_in_dict = set(name for name, _ in name_sum_dict)
@@ -212,9 +208,6 @@ print("length filtered data: ", len(filtered_list))
 
 extra_list = [name for name in unique_names_in_dict if name not in [item[0] for item in filtered_list]]
 
-# print(len(name_sum_dict))
-# Print the result
-# print(len(extra_list), extra_list)
 
 print("Number of rows in demand file before end date: ",len(list_bef_cur_date))
 print("Number of rows in demand file: ", len(l1))
@@ -262,8 +255,7 @@ setf = {''}
 
 arr1 = sorted(arr1, key=lambda x: x[0])  # Sorting list by PrimeItem
 print(all_rows_as_list[0])
-print("НАчал пробовать изменения ")
-print(len(arr1))
+
 for i in range(len(all_rows_as_list)):
     counter1 = 0
     for j in range(len(arr1)):
@@ -277,7 +269,6 @@ for i in range(len(all_rows_as_list)):
 
 print(len(arr1))
 
-print("закончил")
 arr2 = [item[1] for item in all_rows_as_list]
 arrTe = [item[0] for item in all_rows_as_list]
 finalArray = []
@@ -291,9 +282,7 @@ list_temp10 = []
 List_of_SKUs_with_some_D_but_0_FCST = []
 List_of_SKUs_with_0_D_but_some_FCST = []
 list_of_demands_and_delfors = []
-#print("FIRST DATA", arr1[0])
-#print(len(arr1))
-#print("LAST DATA",arr1[len(arr1)-1])
+
 
 #Main loop of calculation
 for i in range(len(arr1)):
@@ -341,9 +330,7 @@ for i in range(len(arr1)):
             if (arr1[i][0] in arrTe):
                 list_temp10.append([arr1[i][0], arr1[i][1], arr1[i][2]])
 
-# print("lentgh govna: ", len(list_temp10))
-# for element in list_temp10:
-#     print(element)
+
 
 from collections import defaultdict
 
@@ -361,10 +348,6 @@ for prime_item, _, fc, d in list_temp10:
 # Convert the defaultdict to a regular dictionary
 result_dict = dict(aggregated_data)
 
-# # Print the result
-# for prime_item, (total_fc, total_d) in result_dict.items():
-#     print(f"PrimeItem: {prime_item}, Total FC: {total_fc}, Total D: {total_d}")
-#
 
 listik_temp = [name for name, values in result_dict.items() if all(value == 0 for value in values)]
 
@@ -397,11 +380,7 @@ print("ВОТ ВОТ ВОТ")
 for i in range(len(list_of_demands_and_delfors)-1):
     (list_of_demands_and_delfors[i])[0] = (list_of_demands_and_delfors[i+1])[0]
     (list_of_demands_and_delfors[i])[1] = (list_of_demands_and_delfors[i+1])[1]
-    #(list_of_demands_and_delfors[i])[2] = (list_of_demands_and_delfors[i + 1])[2]
 print(list_of_demands_and_delfors)
-# print("FINAL ARRAY: size is \n", len(finalArray))
-# for el in finalArray:
-#     print(el)
 
 
  #creating list for all items with demand > 0  and Forecast is 0
@@ -440,10 +419,6 @@ for els in temp2:
 
 print("====================================================================================")
 
-# print(temp2[(len(temp2)-1)])
-
-#for element in temp2:
-#print(element)
 
 print("====================================================================================")
 print("Metrics: ")
@@ -481,8 +456,7 @@ print(perfect_demand)
 print("====================================================================================")
 
 print("List demand > 0 and FC = 0: ")
-# List_of_SKUs_with_some_D_but_0_FCST.extend(extra_list)
-# # Remove duplicates from original_list in place
+# Remove duplicates from original_list in place
 # List_of_SKUs_with_some_D_but_0_FCST = [item for index, item in enumerate(List_of_SKUs_with_some_D_but_0_FCST) if item not in List_of_SKUs_with_some_D_but_0_FCST[:index]]
 
 # Print the result
@@ -521,7 +495,6 @@ sheet2.append(['List_of_SKUs_with_demand_downside','','List_of_SKUs_with_demand_
 columns2 = ['PrimeItem (downsides)', 'BIAS% for downsides' , 'PrimeItem (upsides)', 'BIAS% for upsides']
 sheet2.append(columns2)
 
-#if(len(data222) >= len(len(data333))):
 combined_list = []
 
 for i in range(max(len(data222), len(data333))):
@@ -529,7 +502,7 @@ for i in range(max(len(data222), len(data333))):
     item_2 = data333[i] if i < len(data333) else ["", ""]
     combined_list.append(item_1 + item_2)
 
-#print(combined_list)
+
 # Write data to Sheet 2
 for row in combined_list:
     sheet2.append(row)
@@ -565,30 +538,3 @@ for row in list_temp10:
 #  workbook.save(filename= filepath + current_date_string + filename + CountOfWeeks + extention)
 workbook.save(filename='Forecast Analysis test output 2.xlsx')
 sheet3.append([])
-
-print(len(arr1))
-print(len(list_of_demands_and_delfors))
-r_var = 0
-
-list_items_DandFC_more1 = []
-
-for el in arr1:
-    if(len(el) == 4):
-        if(el[2] >= 1 and el[3] >= 1):
-            r_var+=1
-            list_items_DandFC_more1.append(el)
-
-print(r_var)
-
-# for p in arr1:
-#     print(p)
-
-# Extract unique names
-unique_names = set(item[0] for item in arr1)
-
-# Convert set to list if needed
-unique_names_list = list(unique_names)
-print(unique_names_list)
-# Print the result
-print(len(unique_names_list))
-
