@@ -1,3 +1,31 @@
+Forecast File: "DELFOR 2023.10.15"
+Remove the first two rows.
+Remove columns 1, 2, 3, 4, 5, 7, 8, 9, 10, and 13.
+Column 6 is called PrimeItem.
+Column 11 is Qty.
+Column 12 is Date.
+In the PrimeItem column, add the prefix CIS-.
+
+Order File: "Demand":
+Input Data: The names of the forecast and order files.
+
+Remove mismatched data in the DELFOR file.
+
+What should be displayed:
+Bias: The average difference (FC (from DELFOR file) - D) for each date (no longer need to display this).
+Bias%: Bias divided by the average demand for the entire period.
+MAE%: The sum of the absolute values of (FC - D) for each date (which is |Bias|) divided by the total demand for the entire period.
+RMSE%: The square root of the sum of (FC - D)^2 divided by n, all divided by the average demand for the entire period.
+Score%: MAE% + |Bias%|.
+
+Display each average metric for the entire file. For each column, display the average.
+
+List of PrimeItems where Bias% > 5%:
+List of SKUs with demand downside + each corresponding Bias%.
+
+List of PrimeItems where Bias% < -5%:
+List of SKUs with demand upside + each corresponding Bias%.
+
 Файл прогноза: "DELFOR 2023.10.15" ;
 Удалить первые два ряда, удалить колонки 1,2,3,4,5,7,8,9,10,13;
 Колонка 6 называется PrimeItem, Колонка 11 - Qty, Колонка 12 - Date 
@@ -6,12 +34,7 @@
 
 Файл заказов "Demand":
 
-
-
-
-
 Input данные: название файла прогноза и файла заказов;
-
 
 Удалить не совпадающие данные в файле DELFOR
 
@@ -28,7 +51,6 @@ RMSE%: (sqrt ((сумма (FC - D)^2)/n)) / AVG (Demand за весь перио
 Score%: MAE% + |Bias%|
 
 Должно вывести на экран каждую среднюю метрику за весь файл. avg каждой колонки 
-
 
 Список "PrimeItem" для которых bias% > 5% -> List of SKUs with demand downside + bias% каждого просто вывод этих данных
 

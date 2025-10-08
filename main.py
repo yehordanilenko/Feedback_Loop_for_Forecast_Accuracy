@@ -530,7 +530,7 @@ for row in list_temp10:
 
 
 # # Save the workbook
-# filepath = 'C:/Users/vrymvolm/OneDrive - Flex/Projecten/202310 - Forecast vs Target SSD Demand/'
+# filepath = 'Forecast vs Target SSD Demand/'
 # filename = ' - ForecastAnalysis'
 # extention = '.xlsx'
 # current_date_string = str(current_date)
