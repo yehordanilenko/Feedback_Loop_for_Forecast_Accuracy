@@ -9,8 +9,8 @@ from statistics import mean
 from openpyxl import Workbook
 from pandas import DateOffset
 
-file_delfor = 'DELFOR 2023.12.04.csv' # Name of delfor file 04-12-2023
-file_demand = 'Demand by Target SSD converter V1.0.xlsx'  # Name of demand file
+file_delfor = 'DELFOR2023.10.15.csv' # Name of delfor file 04-12-2023
+file_demand = 'demand_file.xlsx'  # Name of demand file
 NumberOfWeeksToAnalyze = 7 # Number of forecast/demand periods to analyze
 
 data_delfor = pd.read_csv(file_delfor, sep='|', header=None, skiprows=2) # Reading data from csv
@@ -50,7 +50,8 @@ record_no_priority_1 = dict(data_second[data_second['Priority'] == 1].set_index(
 merged_data['PrimeItem_Priority_1'] = merged_data['Record No.'].map(record_no_priority_1)
 
 # If 'PrimeItem_Priority_1' is NaN, use 'PrimeItem' as a fallback
-merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'], inplace=True)
+#merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'], inplace=True)
+merged_data['PrimeItem_Priority_1'] = merged_data['PrimeItem_Priority_1'].fillna(merged_data['PrimeItem'])
 
 
 # Group by 'Record No.', 'Date', and 'PrimeItem_Priority_1', and aggregate
